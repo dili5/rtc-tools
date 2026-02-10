@@ -66,8 +66,8 @@ class TwoReservoirFloodModel(CSVMixin, SimulationProblem):
         release_feedforward = kff_release_b * incoming_b if level_b >= level_b_target else 0.0
         q_release_b_cmd = release_feedback + release_feedforward
 
-        # Ensure that commanded outflow cannot exceed available water during this step.
-        max_total_out_b = max(storage_b / dt + incoming_b, 0.0)
+        # Conservative safeguard: do not release more than current storage over one time step.
+        max_total_out_b = max(storage_b / dt, 0.0)
         q_supply_cmd = self._clip(q_supply_demand, 0.0, min(max_supply_b, max_total_out_b))
         q_release_b_cmd = self._clip(
             q_release_b_cmd, 0.0, min(max_release_b, max(max_total_out_b - q_supply_cmd, 0.0))
