@@ -1,0 +1,2 @@
+V_a_init,V_b_init,A_surface_a,A_surface_b,z_ref_a,z_ref_b,spill_crest_a_to_b,weir_coefficient,max_gate_a,max_release_b,max_supply_b,level_a_target,level_b_target,Kp_gate_a,Kp_release_b,Kff_release_b
+1450000.0,1000000.0,200000.0,300000.0,30.0,30.0,38.14,120.0,20.0,394.0,5.0,37.8,34.5,120.0,280.0,1.0
