@@ -113,3 +113,39 @@ For each RTC cycle:
 3. Run `optimization.py` to compute gate discharge trajectories;
 4. Apply first control step to field operation;
 5. Repeat at next cycle (rolling horizon).
+
+## 6) How to model weirs and gates more accurately
+
+`DischargeControlledStructure` is a practical abstraction when discharge is
+directly controlled. For better physical fidelity, use head-dependent formulas.
+
+### 6.1 Sluice gate (orifice-like)
+
+Use gate opening as control variable (`u_gate`), not discharge:
+
+- `Q = C_d * b * a(u_gate) * sqrt(2 * g * max(H_up - H_down, 0))`
+
+where:
+
+- `b`: gate width
+- `a(u_gate)`: opening height from control command
+- `C_d`: discharge coefficient (calibrated)
+
+### 6.2 Weir
+
+For free overflow:
+
+- `Q = C_w * b * H_eff^(3/2)`
+
+For drowned/submerged conditions, apply a submergence correction factor.
+
+### 6.3 Practical RTC-Tools setup
+
+1. Keep the network topology in Modelica as now;
+2. Replace pure `Q` controls by structure opening controls where needed;
+3. Implement discharge equations in Modelica (or use lookup tables);
+4. In optimization, constrain opening rates (`du/dt`) for actuator realism;
+5. Calibrate `C_d`, `C_w`, and submergence corrections against measurements.
+
+For very nonlinear regime switching, start with smooth approximations to avoid
+solver instability, then add regime logic if needed.
