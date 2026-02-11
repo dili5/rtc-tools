@@ -332,7 +332,7 @@ equation
 
   baoshihu_yihongdao_Q_calc = min(
     baoshihu_yihongdao_q_max,
-    baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * noEvent(max(baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level, 0.0)) ^ (3.0 / 2.0)
+    baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * max(baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level, 0.0) ^ (3.0 / 2.0)
   );
   baoshihu_yihongdao.Q = baoshihu_yihongdao_Q_calc;
 
