@@ -16,6 +16,8 @@ model tgsy
 
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal xixianghe annotation(
     Placement(transformation(origin = {55, -55}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator xixianghe_junction(n_QLateral = 1) annotation(
+    Placement(transformation(origin = {55, -44}, extent = {{-4, -4}, {4, 4}}, rotation = -90)));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal maozhouhe annotation(
     Placement(transformation(origin = {65, 115}, extent = {{5, 5}, {-5, -5}})));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal shiyan_gongshui annotation(
@@ -23,17 +25,19 @@ model tgsy
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal tiegang_gongshui annotation(
     Placement(transformation(origin = {86, -26}, extent = {{-4, -4}, {4, 4}})));
 
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage shiyan_shengtaiku annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator shiyan_shengtaiku(n_QLateral = 1) annotation(
     Placement(transformation(origin = {95, 95}, extent = {{5, -5}, {-5, 5}})));
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage baoshihu_shengtaiku annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator baoshihu_shengtaiku(n_QLateral = 1) annotation(
     Placement(transformation(origin = {106, 14}, extent = {{-4, 4}, {4, -4}}, rotation = 90)));
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage yingrenshi_shengtaiku_storage annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator yingrenshi_shengtaiku_storage(
+    n_QLateral = 2
+  ) annotation(
     Placement(transformation(origin = {94, 26}, extent = {{-4, -4}, {4, 4}}, rotation = 180)));
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage jiuwei_shengtaiku annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator jiuwei_shengtaiku(n_QLateral = 2) annotation(
     Placement(transformation(origin = {26, 6}, extent = {{-4, -4}, {4, 4}})));
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage shiyan_storage annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator shiyan_storage(n_QLateral = 2) annotation(
     Placement(transformation(origin = {50, 66}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
-  Deltares.ChannelFlow.SimpleRouting.Storage.Storage tiegang_storage annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator tiegang_storage(n_QLateral = 5) annotation(
     Placement(transformation(origin = {70, -10}, extent = {{-20, -20}, {20, 20}}, rotation = -90)));
 
   Deltares.ChannelFlow.SimpleRouting.Structures.DischargeControlledStructure jiuwei_liantongzha annotation(
@@ -109,8 +113,8 @@ equation
   shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q;
   shiyan_shengtaiku_xieshuizha.Q = shiyan_shengtaiku_xieshuizha_Q;
 
-  connect(shiyan_storage.QOut, shiyan_gongshui.QIn) annotation(
-    Line(points = {{50, 50}, {37, 50}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(shiyan_storage.QLateral[1], shiyan_gongshui.QIn) annotation(
+    Line(points = {{50, 63.2}, {44, 63.2}, {44, 50}, {37, 50}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(shiyanhe_inflow.QOut, shiyan_shengtaiku.QIn) annotation(
     Line(points = {{111, 95}, {99, 95}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(shiyan_else_inflow.QOut, shiyan_storage.QIn) annotation(
@@ -119,52 +123,54 @@ equation
     Line(points = {{106, 5.2}, {106, 11.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(jiuwei_inflow.QOut, jiuwei_shengtaiku.QIn) annotation(
     Line(points = {{17.2, 6}, {23.2, 6}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(tiegang_storage.QOut, tiegang_gongshui.QIn) annotation(
-    Line(points = {{70, -26}, {83, -26}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(tiegang_storage.QLateral[5], tiegang_gongshui.QIn) annotation(
+    Line(points = {{76.5, -9.7}, {80, -9.7}, {80, -26}, {83, -26}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(tiegang_else_inflow.QOut, tiegang_storage.QIn) annotation(
     Line(points = {{57.2, 14}, {64.7, 14}, {64.7, 6}, {70, 6}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(jiuwei_shengtaiku.QOut, jiuwei_liantongzha.QIn) annotation(
     Line(points = {{29.2, 6}, {43.2, 6}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(jiuwei_liantongzha.QOut, tiegang_storage.QIn) annotation(
-    Line(points = {{49.2, 6}, {70, 6}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(jiuwei_liantongzha.QOut, tiegang_storage.QLateral[1]) annotation(
+    Line(points = {{49.2, 6}, {63.5, 6}, {63.5, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(yingrenshi_shengtaiku_storage.QOut, yingrenshi_xieshuizha.QIn) annotation(
     Line(points = {{90.8, 26}, {87.6, 26}, {87.6, 34}, {80.8, 34}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_xieshuizha.QOut, jiuwei_shengtaiku.QIn) annotation(
-    Line(points = {{74.8, 34}, {22.6, 34}, {22.6, 6}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_shengtaiku_storage.QOut, yingrenshi_liantongzha.QIn) annotation(
-    Line(points = {{90.8, 26}, {87.8, 26}, {87.8, 22}, {80.8, 22}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_liantongzha.QOut, tiegang_storage.QIn) annotation(
-    Line(points = {{74.8, 22}, {69.8, 22}, {69.8, 6}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(jiuwei_shengtaiku.QOut, jiuwei_xieshuizha.QIn) annotation(
-    Line(points = {{29.2, 6}, {34.2, 6}, {34.2, -3}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(jiuwei_xieshuizha.QOut, xixianghe.QIn) annotation(
-    Line(points = {{34, -9.2}, {34, -30.7}, {55, -30.7}, {55, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(yingrenshi_xieshuizha.QOut, jiuwei_shengtaiku.QLateral[1]) annotation(
+    Line(points = {{74.8, 34}, {22.6, 34}, {22.6, 6.3}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(yingrenshi_liantongzha.QOut, tiegang_storage.QLateral[2]) annotation(
+    Line(points = {{74.8, 22}, {68, 22}, {68, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(jiuwei_shengtaiku.QLateral[2], jiuwei_xieshuizha.QIn) annotation(
+    Line(points = {{26.3, 9.2}, {34.2, 9.2}, {34.2, -3}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(jiuwei_xieshuizha.QOut, xixianghe_junction.QIn) annotation(
+    Line(points = {{34, -9.2}, {34, -30.7}, {55, -30.7}, {55, -40.8}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(tiegang_storage.QOut, tiegang_yihongdao_gate.QIn) annotation(
     Line(points = {{70, -26}, {70, -34}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(tiegang_yihongdao_gate.QOut, xixianghe.QIn) annotation(
-    Line(points = {{70, -41.2}, {55, -41.2}, {55, -50.2}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(tiegang_yihongdao_gate.QOut, xixianghe_junction.QLateral[1]) annotation(
+    Line(points = {{70, -41.2}, {58.2, -41.2}, {58.2, -44}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_shengtaiku.QOut, baoshihu_xieshuizha.QIn) annotation(
     Line(points = {{106, 17.2}, {106, 20.3}, {109, 20.3}, {109, 26.2}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(baoshihu_xieshuizha.QOut, yingrenshi_shengtaiku_storage.QIn) annotation(
-    Line(points = {{102.8, 26}, {96.8, 26}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(baoshihu_shengtaiku.QOut, baoshihu_yihongdao.QIn) annotation(
-    Line(points = {{106, 17.2}, {103, 17.2}, {103, 14.2}, {97, 14.2}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(baoshihu_xieshuizha.QOut, yingrenshi_shengtaiku_storage.QLateral[1]) annotation(
+    Line(points = {{102.8, 26}, {98, 26}, {98, 29.2}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(baoshihu_shengtaiku.QLateral[1], baoshihu_yihongdao.QIn) annotation(
+    Line(points = {{106.3, 17.2}, {103, 17.2}, {103, 14.2}, {97, 14.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(shiyan_storage.QOut, shiyan_yihongdaozha.QIn) annotation(
     Line(points = {{50, 50}, {61, 50}, {61, 43}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(shiyan_yihongdaozha.QOut, tiegang_storage.QIn) annotation(
-    Line(points = {{61, 38.6}, {70, 38.6}, {70, 5.6}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(shiyan_yihongdaozha.QOut, tiegang_storage.QLateral[3]) annotation(
+    Line(points = {{61, 38.6}, {72, 38.6}, {72, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(shiyan_shengtaiku.QOut, shengyanshengtaiku_yan.QIn) annotation(
     Line(points = {{91, 95}, {82, 95}, {82, 93}, {66, 93}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(shengyanshengtaiku_yan.QOut, shiyan_storage.QIn) annotation(
-    Line(points = {{66, 86.8}, {66, 81.6}, {50, 81.6}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(shiyan_shengtaiku.QOut, shiyan_shengtaiku_xieshuizha.QIn) annotation(
-    Line(points = {{91, 95}, {85, 95}, {85, 101}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(shengyanshengtaiku_yan.QOut, shiyan_storage.QLateral[2]) annotation(
+    Line(points = {{66, 86.8}, {66, 81.6}, {53.2, 81.6}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(shiyan_shengtaiku.QLateral[1], shiyan_shengtaiku_xieshuizha.QIn) annotation(
+    Line(points = {{91.8, 95}, {85, 95}, {85, 101}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(shiyan_shengtaiku_xieshuizha.QOut, maozhouhe.QIn) annotation(
     Line(points = {{85, 109}, {81.5, 109}, {81.5, 115}, {69, 115}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(baoshihu_yihongdao.QOut, tiegang_storage.QIn) annotation(
-    Line(points = {{90.8, 14}, {69.8, 14}, {69.8, 6}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(baoshihu_yihongdao.QOut, tiegang_storage.QLateral[4]) annotation(
+    Line(points = {{90.8, 14}, {74, 14}, {74, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(yingrenshi_inflow.QOut, yingrenshi_shengtaiku_storage.QIn) annotation(
-    Line(points = {{94, 32.8}, {98, 32.8}, {98, 25.8}}, arrow = {Arrow.None, Arrow.Filled}));
+    Line(points = {{94, 32.8}, {94, 29.2}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(yingrenshi_shengtaiku_storage.QLateral[2], yingrenshi_liantongzha.QIn) annotation(
+    Line(points = {{91.2, 29.2}, {84, 29.2}, {84, 22}, {80.8, 22}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(xixianghe_junction.QOut, xixianghe.QIn) annotation(
+    Line(points = {{55, -47.2}, {55, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
 
   annotation(
     Diagram(coordinateSystem(extent = {{0, 120}, {120, -80}})));

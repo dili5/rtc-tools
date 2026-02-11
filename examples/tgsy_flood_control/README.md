@@ -70,6 +70,15 @@ Use these three layers:
      - `*_V_min`, `*_V_max`
      - `shiyan_gongshui_Q_min`, `tiegang_gongshui_Q_min`
 
+## 2.1) Important: avoid over-constrained topology
+
+If multiple structures are connected directly to the same `Storage.QIn` or
+`Storage.QOut`, the model can become over-constrained (`Not_Enough_Degrees_Of_Freedom`).
+
+In this template, multi-in/multi-out nodes are modeled as
+`SimpleRouting.Branches.Integrator(n_QLateral = ...)` so each incoming/outgoing
+branch has its own connector (`QIn`, `QOut`, `QLateral[i]`).
+
 ## 3) Run flood-process simulation
 
 ```bash
