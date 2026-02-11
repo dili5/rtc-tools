@@ -93,6 +93,9 @@ allowed).
 `src/vh_curve_excel_mixin.py` converts Excel `V` to m^3 by multiplying by
 `1.0e4` before injecting curve parameters into the model.
 
+During preprocessing, the mixin logs per-object diagnostics (curve source,
+range, monotonicity, and initial V consistency) to help locate bad data.
+
 Notes:
 
 - `yingrenshi_shengtaiku_storage` also accepts the alias sheet name

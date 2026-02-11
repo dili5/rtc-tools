@@ -28,6 +28,7 @@ class VhCurveExcelMixin:
     vh_curve_sheet_suffix = "Z-V"
     # Excel V is provided in 10^4 m3 for this project, convert to m3.
     vh_curve_volume_multiplier = 1.0e4
+    vh_curve_log_diagnostics = True
     vh_curve_objects = (
         "shiyan_shengtaiku",
         "baoshihu_shengtaiku",
@@ -122,6 +123,7 @@ class VhCurveExcelMixin:
     def __init__(self, **kwargs):
         self._vh_model_folder = kwargs.get("model_folder")
         self._vh_curves_cache = None
+        self._vh_curve_sources = {}
         super().__init__(**kwargs)
 
     def pre(self):
@@ -131,6 +133,7 @@ class VhCurveExcelMixin:
         # before initialization/transcription.
         if hasattr(self, "io"):
             self._inject_vh_curve_parameters_into_io()
+        self._log_curve_initial_state_diagnostics()
 
     def parameters(self, *args, **kwargs):
         parameters = super().parameters(*args, **kwargs)
@@ -151,6 +154,13 @@ class VhCurveExcelMixin:
                     self.io.set_parameter(key, float(fitted_curve[i - 1, 0]))
                 for i, key in enumerate(scalar_names["h"], start=1):
                     self.io.set_parameter(key, float(fitted_curve[i - 1, 1]))
+                if self.vh_curve_log_diagnostics:
+                    src = self._vh_curve_sources.get(object_name, "unknown")
+                    logger.info(
+                        f"Injected V-H[{object_name}] from {src}: "
+                        f"V1={fitted_curve[0, 0]:.3f}, V{point_count}={fitted_curve[-1, 0]:.3f}, "
+                        f"H1={fitted_curve[0, 1]:.3f}, H{point_count}={fitted_curve[-1, 1]:.3f}"
+                    )
 
     def _inject_vh_curve_parameters(self, parameters):
         curves = self._load_vh_curves()
@@ -258,6 +268,7 @@ class VhCurveExcelMixin:
             return self._vh_curves_cache
 
         curves = {name: np.array(values, dtype=float) for name, values in self.vh_curve_defaults.items()}
+        self._vh_curve_sources = {name: "python_default" for name in self.vh_curve_objects}
         workbook_path = self._resolve_workbook_path()
         if not workbook_path.exists():
             logger.warning(
@@ -308,15 +319,77 @@ class VhCurveExcelMixin:
                         continue
 
                     curves[object_name] = vh_pairs
+                    self._vh_curve_sources[object_name] = f"excel:{sheet_name}"
         except Exception as error:
             logger.warning(
                 f"Failed to read V-H curves from workbook {workbook_path}: {error}. "
                 "Python default V-H parameters will be used."
             )
             curves = {name: np.array(values, dtype=float) for name, values in self.vh_curve_defaults.items()}
+            self._vh_curve_sources = {name: "python_default(exception)" for name in self.vh_curve_objects}
 
+        self._log_curve_quality_diagnostics(curves)
         self._vh_curves_cache = curves
         return self._vh_curves_cache
+
+    def _log_curve_quality_diagnostics(self, curves):
+        if not self.vh_curve_log_diagnostics:
+            return
+        for object_name in self.vh_curve_objects:
+            curve = curves.get(object_name)
+            if curve is None or len(curve) < 2:
+                logger.warning(f"V-H[{object_name}] missing or too short after loading.")
+                continue
+
+            source = self._vh_curve_sources.get(object_name, "unknown")
+            dv = np.diff(curve[:, 0])
+            dh = np.diff(curve[:, 1])
+            mono_v = bool(np.all(dv > 0))
+            mono_h = bool(np.all(dh >= 0))
+            finite = bool(np.all(np.isfinite(curve)))
+
+            logger.info(
+                f"V-H[{object_name}] source={source}, points={len(curve)}, "
+                f"V_range=[{curve[0, 0]:.3f}, {curve[-1, 0]:.3f}], "
+                f"H_range=[{curve[:, 1].min():.3f}, {curve[:, 1].max():.3f}], "
+                f"finite={finite}, monotonic_V={mono_v}, monotonic_H={mono_h}"
+            )
+
+            if not mono_v:
+                logger.warning(f"V-H[{object_name}] has non-increasing V sequence: dV={dv}")
+            if not mono_h:
+                logger.warning(f"V-H[{object_name}] has non-monotonic H sequence: dH={dh}")
+
+    def _log_curve_initial_state_diagnostics(self):
+        if not self.vh_curve_log_diagnostics:
+            return
+
+        curves = self._load_vh_curves()
+        try:
+            initial_state = self.initial_state()
+        except Exception as error:
+            logger.warning(f"Failed to inspect initial_state() for V-H diagnostics: {error}")
+            return
+
+        for object_name in self.vh_curve_objects:
+            state_name = f"{object_name}.V"
+            if state_name not in initial_state:
+                continue
+            v0 = float(initial_state[state_name])
+            curve = curves.get(object_name)
+            if curve is None or len(curve) < 2:
+                continue
+            v_min = float(curve[0, 0])
+            v_max = float(curve[-1, 0])
+            in_range = v_min <= v0 <= v_max
+            message = (
+                f"Initial state check for {state_name}: V0={v0:.3f}, "
+                f"curve_range=[{v_min:.3f}, {v_max:.3f}], in_range={in_range}"
+            )
+            if in_range:
+                logger.info(message)
+            else:
+                logger.warning(message)
 
     def _candidate_sheet_names(self, object_name):
         aliases = list(self.vh_curve_sheet_aliases.get(object_name, ()))
