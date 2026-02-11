@@ -113,10 +113,33 @@ class VhCurveExcelMixin:
         self._vh_curves_cache = None
         super().__init__(**kwargs)
 
+    def pre(self):
+        super().pre()
+        # Simulation/optimization IO mixins read parameters from self.io.
+        # Inject V-H curve points there so model parameter variables are assigned
+        # before initialization/transcription.
+        if hasattr(self, "io"):
+            self._inject_vh_curve_parameters_into_io()
+
     def parameters(self, *args, **kwargs):
         parameters = super().parameters(*args, **kwargs)
         self._inject_vh_curve_parameters(parameters)
         return parameters
+
+    def _inject_vh_curve_parameters_into_io(self):
+        curves = self._load_vh_curves()
+        if not curves:
+            return
+
+        for object_name, vh_pairs in curves.items():
+            scalar_names = self._scalar_parameter_names(object_name)
+            if scalar_names:
+                point_count = len(scalar_names["v"])
+                fitted_curve = self._resample_curve(vh_pairs, point_count)
+                for i, key in enumerate(scalar_names["v"], start=1):
+                    self.io.set_parameter(key, float(fitted_curve[i - 1, 0]))
+                for i, key in enumerate(scalar_names["h"], start=1):
+                    self.io.set_parameter(key, float(fitted_curve[i - 1, 1]))
 
     def _inject_vh_curve_parameters(self, parameters):
         curves = self._load_vh_curves()
@@ -125,6 +148,31 @@ class VhCurveExcelMixin:
 
         for object_name, vh_pairs in curves.items():
             self._assign_curve_parameters(parameters, object_name, vh_pairs)
+
+    def _scalar_parameter_names(self, object_name):
+        names_v = []
+        names_h = []
+        key_pattern_v = re.compile(rf"^{re.escape(object_name)}_vh_v(\d+)$")
+        key_pattern_h = re.compile(rf"^{re.escape(object_name)}_vh_h(\d+)$")
+
+        for key in self.get_parameter_variables().keys():
+            match_v = key_pattern_v.match(key)
+            if match_v:
+                names_v.append((int(match_v.group(1)), key))
+            match_h = key_pattern_h.match(key)
+            if match_h:
+                names_h.append((int(match_h.group(1)), key))
+
+        if not names_v or not names_h:
+            return None
+
+        names_v.sort(key=lambda x: x[0])
+        names_h.sort(key=lambda x: x[0])
+        n = min(len(names_v), len(names_h))
+        return {
+            "v": [k for _, k in names_v[:n]],
+            "h": [k for _, k in names_h[:n]],
+        }
 
     def _assign_curve_parameters(self, parameters, object_name, vh_pairs):
         assigned = False
