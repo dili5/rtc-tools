@@ -90,6 +90,12 @@ For each sheet:
 Rows with non-numeric values are ignored automatically (so header rows are
 allowed).
 
+Notes:
+
+- `yingrenshi_shengtaiku_storage` also accepts the alias sheet name
+  `yingrenshi_shengtaiku_storagZ-V`.
+- `xixianghe_junctionZ-V` is optional; if missing, a default curve is used.
+
 ## 2) Property binding strategy
 
 Use these three layers:

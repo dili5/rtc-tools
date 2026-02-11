@@ -35,6 +35,15 @@ class VhCurveExcelMixin:
         "tiegang_storage",
         "xixianghe_junction",
     )
+    # Object -> allowed sheet names (in order of preference).
+    vh_curve_sheet_aliases = {
+        "yingrenshi_shengtaiku_storage": (
+            "yingrenshi_shengtaiku_storageZ-V",
+            "yingrenshi_shengtaiku_storagZ-V",
+        ),
+    }
+    # Missing sheets for these objects are acceptable and will use defaults.
+    vh_curve_optional_objects = {"xixianghe_junction"}
     vh_curve_defaults = {
         "shiyan_shengtaiku": np.array(
             [
@@ -262,13 +271,24 @@ class VhCurveExcelMixin:
                 sheet_map = self._sheet_name_to_xml_path(workbook)
 
                 for object_name in self.vh_curve_objects:
-                    sheet_name = f"{object_name}{self.vh_curve_sheet_suffix}"
-                    sheet_xml_path = sheet_map.get(sheet_name)
+                    sheet_names = self._candidate_sheet_names(object_name)
+                    sheet_name = None
+                    sheet_xml_path = None
+                    for candidate in sheet_names:
+                        sheet_xml_path = sheet_map.get(candidate)
+                        if sheet_xml_path is not None:
+                            sheet_name = candidate
+                            break
+
                     if sheet_xml_path is None:
-                        logger.warning(
-                            f"Sheet {sheet_name} not found in {workbook_path.name}; "
+                        log_message = (
+                            f"Sheet {sheet_names[0]} not found in {workbook_path.name}; "
                             f"falling back to Python default curve for {object_name}."
                         )
+                        if object_name in self.vh_curve_optional_objects:
+                            logger.info(log_message)
+                        else:
+                            logger.warning(log_message)
                         continue
 
                     vh_pairs = self._read_sheet_vh_pairs(workbook, sheet_xml_path, shared_strings)
@@ -295,6 +315,13 @@ class VhCurveExcelMixin:
 
         self._vh_curves_cache = curves
         return self._vh_curves_cache
+
+    def _candidate_sheet_names(self, object_name):
+        aliases = list(self.vh_curve_sheet_aliases.get(object_name, ()))
+        default_name = f"{object_name}{self.vh_curve_sheet_suffix}"
+        if default_name not in aliases:
+            aliases.insert(0, default_name)
+        return tuple(aliases)
 
     def _resolve_workbook_path(self):
         if self._vh_model_folder is not None:
