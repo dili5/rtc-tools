@@ -3,23 +3,30 @@ model tgsy
 
   function level_from_v_curve
     input SI.Volume V;
-    input Real[:, 2] vh_curve;
+    input Real V1;
+    input Real V2;
+    input Real V3;
+    input Real V4;
+    input Real V5;
+    input Real H1;
+    input Real H2;
+    input Real H3;
+    input Real H4;
+    input Real H5;
     output SI.Position H;
-  protected
-    Integer n;
   algorithm
-    n := size(vh_curve, 1);
-    H := vh_curve[1, 2];
-    if V <= vh_curve[1, 1] then
-      H := vh_curve[1, 2];
-    elseif V >= vh_curve[n, 1] then
-      H := vh_curve[n, 2];
+    if V <= V1 then
+      H := H1;
+    elseif V <= V2 then
+      H := H1 + (H2 - H1) * (V - V1) / (V2 - V1);
+    elseif V <= V3 then
+      H := H2 + (H3 - H2) * (V - V2) / (V3 - V2);
+    elseif V <= V4 then
+      H := H3 + (H4 - H3) * (V - V3) / (V4 - V3);
+    elseif V <= V5 then
+      H := H4 + (H5 - H4) * (V - V4) / (V5 - V4);
     else
-      for i in 1:n - 1 loop
-        if V >= vh_curve[i, 1] and V <= vh_curve[i + 1, 1] then
-          H := vh_curve[i, 2] + (vh_curve[i + 1, 2] - vh_curve[i, 2]) * (V - vh_curve[i, 1]) / (vh_curve[i + 1, 1] - vh_curve[i, 1]);
-        end if;
-      end for;
+      H := H5;
     end if;
   end level_from_v_curve;
 
@@ -84,13 +91,82 @@ model tgsy
     Placement(transformation(origin = {85, 105}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
 
   // V-H curves are injected at runtime from Python mixin (Excel/defaults).
-  parameter Real[5, 2] shiyan_shengtaiku_vh_curve;
-  parameter Real[5, 2] baoshihu_shengtaiku_vh_curve;
-  parameter Real[5, 2] yingrenshi_shengtaiku_storage_vh_curve;
-  parameter Real[5, 2] jiuwei_shengtaiku_vh_curve;
-  parameter Real[5, 2] shiyan_storage_vh_curve;
-  parameter Real[5, 2] tiegang_storage_vh_curve;
-  parameter Real[5, 2] xixianghe_junction_vh_curve;
+  parameter Real shiyan_shengtaiku_vh_v1;
+  parameter Real shiyan_shengtaiku_vh_v2;
+  parameter Real shiyan_shengtaiku_vh_v3;
+  parameter Real shiyan_shengtaiku_vh_v4;
+  parameter Real shiyan_shengtaiku_vh_v5;
+  parameter Real shiyan_shengtaiku_vh_h1;
+  parameter Real shiyan_shengtaiku_vh_h2;
+  parameter Real shiyan_shengtaiku_vh_h3;
+  parameter Real shiyan_shengtaiku_vh_h4;
+  parameter Real shiyan_shengtaiku_vh_h5;
+
+  parameter Real baoshihu_shengtaiku_vh_v1;
+  parameter Real baoshihu_shengtaiku_vh_v2;
+  parameter Real baoshihu_shengtaiku_vh_v3;
+  parameter Real baoshihu_shengtaiku_vh_v4;
+  parameter Real baoshihu_shengtaiku_vh_v5;
+  parameter Real baoshihu_shengtaiku_vh_h1;
+  parameter Real baoshihu_shengtaiku_vh_h2;
+  parameter Real baoshihu_shengtaiku_vh_h3;
+  parameter Real baoshihu_shengtaiku_vh_h4;
+  parameter Real baoshihu_shengtaiku_vh_h5;
+
+  parameter Real yingrenshi_shengtaiku_storage_vh_v1;
+  parameter Real yingrenshi_shengtaiku_storage_vh_v2;
+  parameter Real yingrenshi_shengtaiku_storage_vh_v3;
+  parameter Real yingrenshi_shengtaiku_storage_vh_v4;
+  parameter Real yingrenshi_shengtaiku_storage_vh_v5;
+  parameter Real yingrenshi_shengtaiku_storage_vh_h1;
+  parameter Real yingrenshi_shengtaiku_storage_vh_h2;
+  parameter Real yingrenshi_shengtaiku_storage_vh_h3;
+  parameter Real yingrenshi_shengtaiku_storage_vh_h4;
+  parameter Real yingrenshi_shengtaiku_storage_vh_h5;
+
+  parameter Real jiuwei_shengtaiku_vh_v1;
+  parameter Real jiuwei_shengtaiku_vh_v2;
+  parameter Real jiuwei_shengtaiku_vh_v3;
+  parameter Real jiuwei_shengtaiku_vh_v4;
+  parameter Real jiuwei_shengtaiku_vh_v5;
+  parameter Real jiuwei_shengtaiku_vh_h1;
+  parameter Real jiuwei_shengtaiku_vh_h2;
+  parameter Real jiuwei_shengtaiku_vh_h3;
+  parameter Real jiuwei_shengtaiku_vh_h4;
+  parameter Real jiuwei_shengtaiku_vh_h5;
+
+  parameter Real shiyan_storage_vh_v1;
+  parameter Real shiyan_storage_vh_v2;
+  parameter Real shiyan_storage_vh_v3;
+  parameter Real shiyan_storage_vh_v4;
+  parameter Real shiyan_storage_vh_v5;
+  parameter Real shiyan_storage_vh_h1;
+  parameter Real shiyan_storage_vh_h2;
+  parameter Real shiyan_storage_vh_h3;
+  parameter Real shiyan_storage_vh_h4;
+  parameter Real shiyan_storage_vh_h5;
+
+  parameter Real tiegang_storage_vh_v1;
+  parameter Real tiegang_storage_vh_v2;
+  parameter Real tiegang_storage_vh_v3;
+  parameter Real tiegang_storage_vh_v4;
+  parameter Real tiegang_storage_vh_v5;
+  parameter Real tiegang_storage_vh_h1;
+  parameter Real tiegang_storage_vh_h2;
+  parameter Real tiegang_storage_vh_h3;
+  parameter Real tiegang_storage_vh_h4;
+  parameter Real tiegang_storage_vh_h5;
+
+  parameter Real xixianghe_junction_vh_v1;
+  parameter Real xixianghe_junction_vh_v2;
+  parameter Real xixianghe_junction_vh_v3;
+  parameter Real xixianghe_junction_vh_v4;
+  parameter Real xixianghe_junction_vh_v5;
+  parameter Real xixianghe_junction_vh_h1;
+  parameter Real xixianghe_junction_vh_h2;
+  parameter Real xixianghe_junction_vh_h3;
+  parameter Real xixianghe_junction_vh_h4;
+  parameter Real xixianghe_junction_vh_h5;
 
   parameter Real baoshihu_yihongdao_weir_coefficient = 1.7;
   parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
@@ -162,13 +238,97 @@ equation
   shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q;
   shiyan_shengtaiku_xieshuizha.Q = shiyan_shengtaiku_xieshuizha_Q;
 
-  shiyan_shengtaiku_H = level_from_v_curve(shiyan_shengtaiku.V, shiyan_shengtaiku_vh_curve);
-  baoshihu_shengtaiku_H = level_from_v_curve(baoshihu_shengtaiku.V, baoshihu_shengtaiku_vh_curve);
-  yingrenshi_shengtaiku_H = level_from_v_curve(yingrenshi_shengtaiku_storage.V, yingrenshi_shengtaiku_storage_vh_curve);
-  jiuwei_shengtaiku_H = level_from_v_curve(jiuwei_shengtaiku.V, jiuwei_shengtaiku_vh_curve);
-  shiyan_storage_H = level_from_v_curve(shiyan_storage.V, shiyan_storage_vh_curve);
-  tiegang_storage_H = level_from_v_curve(tiegang_storage.V, tiegang_storage_vh_curve);
-  xixianghe_junction_H = level_from_v_curve(xixianghe_junction.V, xixianghe_junction_vh_curve);
+  shiyan_shengtaiku_H = level_from_v_curve(
+    shiyan_shengtaiku.V,
+    shiyan_shengtaiku_vh_v1,
+    shiyan_shengtaiku_vh_v2,
+    shiyan_shengtaiku_vh_v3,
+    shiyan_shengtaiku_vh_v4,
+    shiyan_shengtaiku_vh_v5,
+    shiyan_shengtaiku_vh_h1,
+    shiyan_shengtaiku_vh_h2,
+    shiyan_shengtaiku_vh_h3,
+    shiyan_shengtaiku_vh_h4,
+    shiyan_shengtaiku_vh_h5
+  );
+  baoshihu_shengtaiku_H = level_from_v_curve(
+    baoshihu_shengtaiku.V,
+    baoshihu_shengtaiku_vh_v1,
+    baoshihu_shengtaiku_vh_v2,
+    baoshihu_shengtaiku_vh_v3,
+    baoshihu_shengtaiku_vh_v4,
+    baoshihu_shengtaiku_vh_v5,
+    baoshihu_shengtaiku_vh_h1,
+    baoshihu_shengtaiku_vh_h2,
+    baoshihu_shengtaiku_vh_h3,
+    baoshihu_shengtaiku_vh_h4,
+    baoshihu_shengtaiku_vh_h5
+  );
+  yingrenshi_shengtaiku_H = level_from_v_curve(
+    yingrenshi_shengtaiku_storage.V,
+    yingrenshi_shengtaiku_storage_vh_v1,
+    yingrenshi_shengtaiku_storage_vh_v2,
+    yingrenshi_shengtaiku_storage_vh_v3,
+    yingrenshi_shengtaiku_storage_vh_v4,
+    yingrenshi_shengtaiku_storage_vh_v5,
+    yingrenshi_shengtaiku_storage_vh_h1,
+    yingrenshi_shengtaiku_storage_vh_h2,
+    yingrenshi_shengtaiku_storage_vh_h3,
+    yingrenshi_shengtaiku_storage_vh_h4,
+    yingrenshi_shengtaiku_storage_vh_h5
+  );
+  jiuwei_shengtaiku_H = level_from_v_curve(
+    jiuwei_shengtaiku.V,
+    jiuwei_shengtaiku_vh_v1,
+    jiuwei_shengtaiku_vh_v2,
+    jiuwei_shengtaiku_vh_v3,
+    jiuwei_shengtaiku_vh_v4,
+    jiuwei_shengtaiku_vh_v5,
+    jiuwei_shengtaiku_vh_h1,
+    jiuwei_shengtaiku_vh_h2,
+    jiuwei_shengtaiku_vh_h3,
+    jiuwei_shengtaiku_vh_h4,
+    jiuwei_shengtaiku_vh_h5
+  );
+  shiyan_storage_H = level_from_v_curve(
+    shiyan_storage.V,
+    shiyan_storage_vh_v1,
+    shiyan_storage_vh_v2,
+    shiyan_storage_vh_v3,
+    shiyan_storage_vh_v4,
+    shiyan_storage_vh_v5,
+    shiyan_storage_vh_h1,
+    shiyan_storage_vh_h2,
+    shiyan_storage_vh_h3,
+    shiyan_storage_vh_h4,
+    shiyan_storage_vh_h5
+  );
+  tiegang_storage_H = level_from_v_curve(
+    tiegang_storage.V,
+    tiegang_storage_vh_v1,
+    tiegang_storage_vh_v2,
+    tiegang_storage_vh_v3,
+    tiegang_storage_vh_v4,
+    tiegang_storage_vh_v5,
+    tiegang_storage_vh_h1,
+    tiegang_storage_vh_h2,
+    tiegang_storage_vh_h3,
+    tiegang_storage_vh_h4,
+    tiegang_storage_vh_h5
+  );
+  xixianghe_junction_H = level_from_v_curve(
+    xixianghe_junction.V,
+    xixianghe_junction_vh_v1,
+    xixianghe_junction_vh_v2,
+    xixianghe_junction_vh_v3,
+    xixianghe_junction_vh_v4,
+    xixianghe_junction_vh_v5,
+    xixianghe_junction_vh_h1,
+    xixianghe_junction_vh_h2,
+    xixianghe_junction_vh_h3,
+    xixianghe_junction_vh_h4,
+    xixianghe_junction_vh_h5
+  );
 
   baoshihu_yihongdao_Q_calc = min(
     baoshihu_yihongdao_q_max,

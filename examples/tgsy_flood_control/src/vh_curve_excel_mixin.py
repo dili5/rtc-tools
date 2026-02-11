@@ -19,8 +19,9 @@ class VhCurveExcelMixin:
     - Column A: Z (water level), Column B: V (storage volume).
 
     Model convention:
-    - Parameter names in Modelica are <object_name>_vh_curve[i,j], with
-      j=1 for V and j=2 for H.
+    - Parameter names in Modelica can be either:
+      1) <object_name>_vh_curve[i,j], with j=1 for V and j=2 for H, or
+      2) <object_name>_vh_v1..vN and <object_name>_vh_h1..hN.
     """
 
     vh_curve_workbook = "Z-V-Q.xlsx"
@@ -123,10 +124,13 @@ class VhCurveExcelMixin:
             return
 
         for object_name, vh_pairs in curves.items():
-            parameter_prefix = f"{object_name}_vh_curve"
-            self._assign_curve_to_parameter_prefix(parameters, parameter_prefix, vh_pairs)
+            self._assign_curve_parameters(parameters, object_name, vh_pairs)
 
-    def _assign_curve_to_parameter_prefix(self, parameters, parameter_prefix, vh_pairs):
+    def _assign_curve_parameters(self, parameters, object_name, vh_pairs):
+        assigned = False
+
+        # 1) Legacy/array form: <object_name>_vh_curve[i,j]
+        parameter_prefix = f"{object_name}_vh_curve"
         pattern = re.compile(rf"^{re.escape(parameter_prefix)}\[(\d+),(\d+)\]$")
         indexed_keys = []
 
@@ -135,19 +139,48 @@ class VhCurveExcelMixin:
             if match:
                 indexed_keys.append((key, int(match.group(1)), int(match.group(2))))
 
-        if not indexed_keys:
-            if parameter_prefix in parameters:
-                parameters[parameter_prefix] = vh_pairs
-            else:
-                logger.debug(f"No Modelica parameter found for V-H curve prefix {parameter_prefix}.")
-            return
+        if indexed_keys:
+            point_count = max(i for _, i, _ in indexed_keys)
+            fitted_curve = self._resample_curve(vh_pairs, point_count)
 
-        point_count = max(i for _, i, _ in indexed_keys)
-        fitted_curve = self._resample_curve(vh_pairs, point_count)
+            for key, i, j in indexed_keys:
+                if j in (1, 2):
+                    parameters[key] = float(fitted_curve[i - 1, j - 1])
+            assigned = True
+        elif parameter_prefix in parameters:
+            parameters[parameter_prefix] = vh_pairs
+            assigned = True
 
-        for key, i, j in indexed_keys:
-            if j in (1, 2):
-                parameters[key] = float(fitted_curve[i - 1, j - 1])
+        # 2) Scalar form: <object_name>_vh_v1..vN and <object_name>_vh_h1..hN
+        scalar_v = []
+        scalar_h = []
+        for key in parameters:
+            match_v = re.match(rf"^{re.escape(object_name)}_vh_v(\d+)$", key)
+            if match_v:
+                scalar_v.append((key, int(match_v.group(1))))
+            match_h = re.match(rf"^{re.escape(object_name)}_vh_h(\d+)$", key)
+            if match_h:
+                scalar_h.append((key, int(match_h.group(1))))
+
+        if scalar_v and scalar_h:
+            max_v = max(i for _, i in scalar_v)
+            max_h = max(i for _, i in scalar_h)
+            point_count = min(max_v, max_h)
+            fitted_curve = self._resample_curve(vh_pairs, point_count)
+
+            v_dict = dict(scalar_v)
+            h_dict = dict(scalar_h)
+            for i in range(1, point_count + 1):
+                key_v = v_dict.get(i)
+                key_h = h_dict.get(i)
+                if key_v is not None:
+                    parameters[key_v] = float(fitted_curve[i - 1, 0])
+                if key_h is not None:
+                    parameters[key_h] = float(fitted_curve[i - 1, 1])
+            assigned = True
+
+        if not assigned:
+            logger.debug(f"No Modelica V-H parameters found for {object_name}.")
 
     @staticmethod
     def _resample_curve(vh_pairs, target_count):
