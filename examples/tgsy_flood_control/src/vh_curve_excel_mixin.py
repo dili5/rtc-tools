@@ -26,6 +26,8 @@ class VhCurveExcelMixin:
 
     vh_curve_workbook = "Z-V-Q.xlsx"
     vh_curve_sheet_suffix = "Z-V"
+    # Excel V is provided in 10^4 m3 for this project, convert to m3.
+    vh_curve_volume_multiplier = 1.0e4
     vh_curve_objects = (
         "shiyan_shengtaiku",
         "baoshihu_shengtaiku",
@@ -382,7 +384,7 @@ class VhCurveExcelMixin:
             z_value = self._to_float(row_values.get(1))
             v_value = self._to_float(row_values.get(2))
             if z_value is not None and v_value is not None:
-                vh_pairs.append((v_value, z_value))
+                vh_pairs.append((v_value * self.vh_curve_volume_multiplier, z_value))
 
         if len(vh_pairs) < 2:
             return None

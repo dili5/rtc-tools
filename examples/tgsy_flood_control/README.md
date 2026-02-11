@@ -85,10 +85,13 @@ are implemented with smooth approximations.
 For each sheet:
 
 - Column A: `Z` (water level)
-- Column B: `V` (storage volume)
+- Column B: `V` (storage volume, in 10^4 m^3)
 
 Rows with non-numeric values are ignored automatically (so header rows are
 allowed).
+
+`src/vh_curve_excel_mixin.py` converts Excel `V` to m^3 by multiplying by
+`1.0e4` before injecting curve parameters into the model.
 
 Notes:
 
