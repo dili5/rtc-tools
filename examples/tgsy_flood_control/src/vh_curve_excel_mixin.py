@@ -34,6 +34,78 @@ class VhCurveExcelMixin:
         "tiegang_storage",
         "xixianghe_junction",
     )
+    vh_curve_defaults = {
+        "shiyan_shengtaiku": np.array(
+            [
+                [2.0e5, 11.0],
+                [8.0e5, 11.8],
+                [2.0e6, 12.7],
+                [3.8e6, 13.7],
+                [5.8e6, 14.8],
+            ],
+            dtype=float,
+        ),
+        "baoshihu_shengtaiku": np.array(
+            [
+                [3.8e4, 7.3],
+                [1.0e5, 7.8],
+                [2.0e5, 8.4],
+                [3.2e5, 8.9],
+                [3.8e5, 9.2],
+            ],
+            dtype=float,
+        ),
+        "yingrenshi_shengtaiku_storage": np.array(
+            [
+                [1.0e5, 7.0],
+                [4.0e5, 7.6],
+                [8.0e5, 8.1],
+                [1.2e6, 8.5],
+                [1.7e6, 8.9],
+            ],
+            dtype=float,
+        ),
+        "jiuwei_shengtaiku": np.array(
+            [
+                [2.0e5, 6.5],
+                [6.0e5, 7.0],
+                [1.0e6, 7.4],
+                [1.6e6, 7.9],
+                [2.2e6, 8.3],
+            ],
+            dtype=float,
+        ),
+        "shiyan_storage": np.array(
+            [
+                [2.6e6, 10.2],
+                [8.0e6, 10.9],
+                [1.6e7, 11.6],
+                [2.4e7, 12.3],
+                [3.2e7, 13.0],
+            ],
+            dtype=float,
+        ),
+        "tiegang_storage": np.array(
+            [
+                [2.1e5, 5.5],
+                [1.0e7, 6.0],
+                [3.0e7, 6.8],
+                [6.0e7, 7.8],
+                [1.0e8, 9.0],
+            ],
+            dtype=float,
+        ),
+        "xixianghe_junction": np.array(
+            [
+                [0.0, 2.0],
+                [5.0e3, 2.2],
+                [1.0e4, 2.35],
+                [2.0e4, 2.5],
+                [4.0e4, 2.7],
+            ],
+            dtype=float,
+        ),
+    }
 
     def __init__(self, **kwargs):
         self._vh_model_folder = kwargs.get("model_folder")
@@ -93,13 +165,14 @@ class VhCurveExcelMixin:
         if self._vh_curves_cache is not None:
             return self._vh_curves_cache
 
+        curves = {name: np.array(values, dtype=float) for name, values in self.vh_curve_defaults.items()}
         workbook_path = self._resolve_workbook_path()
         if not workbook_path.exists():
             logger.warning(
                 f"V-H workbook not found at {workbook_path}. "
-                "Modelica default V-H parameters will be used."
+                "Python default V-H parameters will be used."
             )
-            self._vh_curves_cache = {}
+            self._vh_curves_cache = curves
             return self._vh_curves_cache
 
         try:
@@ -107,14 +180,13 @@ class VhCurveExcelMixin:
                 shared_strings = self._read_shared_strings(workbook)
                 sheet_map = self._sheet_name_to_xml_path(workbook)
 
-                curves = {}
                 for object_name in self.vh_curve_objects:
                     sheet_name = f"{object_name}{self.vh_curve_sheet_suffix}"
                     sheet_xml_path = sheet_map.get(sheet_name)
                     if sheet_xml_path is None:
                         logger.warning(
                             f"Sheet {sheet_name} not found in {workbook_path.name}; "
-                            f"falling back to default curve for {object_name}."
+                            f"falling back to Python default curve for {object_name}."
                         )
                         continue
 
@@ -122,7 +194,7 @@ class VhCurveExcelMixin:
                     if vh_pairs is None:
                         logger.warning(
                             f"Sheet {sheet_name} has insufficient numeric data; "
-                            f"falling back to default curve for {object_name}."
+                            f"falling back to Python default curve for {object_name}."
                         )
                         continue
 
@@ -130,9 +202,9 @@ class VhCurveExcelMixin:
         except Exception as error:
             logger.warning(
                 f"Failed to read V-H curves from workbook {workbook_path}: {error}. "
-                "Modelica default V-H parameters will be used."
+                "Python default V-H parameters will be used."
             )
-            curves = {}
+            curves = {name: np.array(values, dtype=float) for name, values in self.vh_curve_defaults.items()}
 
         self._vh_curves_cache = curves
         return self._vh_curves_cache

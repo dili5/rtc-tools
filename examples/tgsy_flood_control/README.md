@@ -9,7 +9,8 @@ Before running, make sure your Python environment already contains the
 RTC-Tools runtime dependencies (including `casadi` and `pymoca`).
 
 The V-H curves are read from `model/Z-V-Q.xlsx` by
-`src/vh_curve_excel_mixin.py` (no extra Python package required).
+`src/vh_curve_excel_mixin.py` (no extra Python package required). If the file
+or some sheets are missing, built-in Python default curves are used.
 
 ## 1) What was bound in `model/tgsy.mo`
 

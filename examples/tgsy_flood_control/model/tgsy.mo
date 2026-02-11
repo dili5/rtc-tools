@@ -83,13 +83,14 @@ model tgsy
   Deltares.ChannelFlow.SimpleRouting.Structures.DischargeControlledStructure shiyan_shengtaiku_xieshuizha annotation(
     Placement(transformation(origin = {85, 105}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
 
-  parameter Real[5, 2] shiyan_shengtaiku_vh_curve = [2.0e5, 11.0; 8.0e5, 11.8; 2.0e6, 12.7; 3.8e6, 13.7; 5.8e6, 14.8];
-  parameter Real[5, 2] baoshihu_shengtaiku_vh_curve = [3.8e4, 7.3; 1.0e5, 7.8; 2.0e5, 8.4; 3.2e5, 8.9; 3.8e5, 9.2];
-  parameter Real[5, 2] yingrenshi_shengtaiku_storage_vh_curve = [1.0e5, 7.0; 4.0e5, 7.6; 8.0e5, 8.1; 1.2e6, 8.5; 1.7e6, 8.9];
-  parameter Real[5, 2] jiuwei_shengtaiku_vh_curve = [2.0e5, 6.5; 6.0e5, 7.0; 1.0e6, 7.4; 1.6e6, 7.9; 2.2e6, 8.3];
-  parameter Real[5, 2] shiyan_storage_vh_curve = [2.6e6, 10.2; 8.0e6, 10.9; 1.6e7, 11.6; 2.4e7, 12.3; 3.2e7, 13.0];
-  parameter Real[5, 2] tiegang_storage_vh_curve = [2.1e5, 5.5; 1.0e7, 6.0; 3.0e7, 6.8; 6.0e7, 7.8; 1.0e8, 9.0];
-  parameter Real[5, 2] xixianghe_junction_vh_curve = [0.0, 2.0; 5.0e3, 2.2; 1.0e4, 2.35; 2.0e4, 2.5; 4.0e4, 2.7];
+  // V-H curves are injected at runtime from Python mixin (Excel/defaults).
+  parameter Real[5, 2] shiyan_shengtaiku_vh_curve;
+  parameter Real[5, 2] baoshihu_shengtaiku_vh_curve;
+  parameter Real[5, 2] yingrenshi_shengtaiku_storage_vh_curve;
+  parameter Real[5, 2] jiuwei_shengtaiku_vh_curve;
+  parameter Real[5, 2] shiyan_storage_vh_curve;
+  parameter Real[5, 2] tiegang_storage_vh_curve;
+  parameter Real[5, 2] xixianghe_junction_vh_curve;
 
   parameter Real baoshihu_yihongdao_weir_coefficient = 1.7;
   parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
