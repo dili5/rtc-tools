@@ -14,17 +14,20 @@ model tgsy
     input Real H4;
     input Real H5;
     output SI.Position H;
+  protected
+    Real eps_v;
   algorithm
+    eps_v := 1e-6;
     if V <= V1 then
       H := H1;
     elseif V <= V2 then
-      H := H1 + (H2 - H1) * (V - V1) / (V2 - V1);
+      H := H1 + (H2 - H1) * (V - V1) / max(V2 - V1, eps_v);
     elseif V <= V3 then
-      H := H2 + (H3 - H2) * (V - V2) / (V3 - V2);
+      H := H2 + (H3 - H2) * (V - V2) / max(V3 - V2, eps_v);
     elseif V <= V4 then
-      H := H3 + (H4 - H3) * (V - V3) / (V4 - V3);
+      H := H3 + (H4 - H3) * (V - V3) / max(V4 - V3, eps_v);
     elseif V <= V5 then
-      H := H4 + (H5 - H4) * (V - V4) / (V5 - V4);
+      H := H4 + (H5 - H4) * (V - V4) / max(V5 - V4, eps_v);
     else
       H := H5;
     end if;
@@ -172,6 +175,8 @@ model tgsy
   parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
   parameter SI.Position baoshihu_yihongdao_crest_level = 8.8;
   parameter SI.VolumeFlowRate baoshihu_yihongdao_q_max = 1500.0;
+  parameter SI.Length baoshihu_yihongdao_head_smoothing = 1e-2;
+  parameter SI.VolumeFlowRate baoshihu_yihongdao_q_smoothing = 1e-2;
 
   input SI.VolumeFlowRate shiyanhe_Q_in(fixed = true);
   input SI.VolumeFlowRate baoshihu_Q_in(fixed = true);
@@ -214,6 +219,8 @@ model tgsy
   output SI.VolumeFlowRate shiyan_gongshui_Q = shiyan_gongshui.QIn.Q;
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
   output SI.VolumeFlowRate baoshihu_yihongdao_Q_calc;
+  output SI.Length baoshihu_yihongdao_head_eff;
+  output SI.VolumeFlowRate baoshihu_yihongdao_Q_free;
 
 equation
   // Junction to outfall is modeled without local storage dynamics.
@@ -330,9 +337,14 @@ equation
     xixianghe_junction_vh_h5
   );
 
-  baoshihu_yihongdao_Q_calc = min(
-    baoshihu_yihongdao_q_max,
-    baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * max(baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level, 0.0) ^ (3.0 / 2.0)
+  // Smooth positive-part head to avoid singular Hessian at crest level.
+  baoshihu_yihongdao_head_eff = 0.5 * (
+    (baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) + sqrt((baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
+  );
+  baoshihu_yihongdao_Q_free = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * baoshihu_yihongdao_head_eff * sqrt(baoshihu_yihongdao_head_eff);
+  // Smooth min(Q_free, Q_max) to keep equations differentiable.
+  baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_q_max - 0.5 * (
+    (baoshihu_yihongdao_q_max - baoshihu_yihongdao_Q_free) + sqrt((baoshihu_yihongdao_q_max - baoshihu_yihongdao_Q_free) ^ 2 + baoshihu_yihongdao_q_smoothing ^ 2)
   );
   baoshihu_yihongdao.Q = baoshihu_yihongdao_Q_calc;
 
