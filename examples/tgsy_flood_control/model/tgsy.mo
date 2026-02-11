@@ -176,6 +176,7 @@ model tgsy
   parameter SI.Position baoshihu_yihongdao_crest_level = 8.8;
   parameter SI.VolumeFlowRate baoshihu_yihongdao_q_max = 1500.0;
   parameter SI.Length baoshihu_yihongdao_head_smoothing = 1e-2;
+  parameter SI.Length baoshihu_yihongdao_head_floor = 1e-6;
   parameter SI.VolumeFlowRate baoshihu_yihongdao_q_smoothing = 1e-2;
 
   input SI.VolumeFlowRate shiyanhe_Q_in(fixed = true);
@@ -218,6 +219,7 @@ model tgsy
   output SI.VolumeFlowRate maozhouhe_Q = maozhouhe.QIn.Q;
   output SI.VolumeFlowRate shiyan_gongshui_Q = shiyan_gongshui.QIn.Q;
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
+  output SI.Length baoshihu_yihongdao_head_raw;
   output SI.VolumeFlowRate baoshihu_yihongdao_Q_calc;
   output SI.Length baoshihu_yihongdao_head_eff;
   output SI.VolumeFlowRate baoshihu_yihongdao_Q_free;
@@ -338,9 +340,11 @@ equation
   );
 
   // Smooth positive-part head to avoid singular Hessian at crest level.
-  baoshihu_yihongdao_head_eff = 0.5 * (
+  baoshihu_yihongdao_head_raw = 0.5 * (
     (baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) + sqrt((baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
   );
+  // Guard against tiny negative values from floating-point cancellation.
+  baoshihu_yihongdao_head_eff = max(baoshihu_yihongdao_head_raw, baoshihu_yihongdao_head_floor);
   baoshihu_yihongdao_Q_free = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * baoshihu_yihongdao_head_eff * sqrt(baoshihu_yihongdao_head_eff);
   // Smooth min(Q_free, Q_max) to keep equations differentiable.
   baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_q_max - 0.5 * (

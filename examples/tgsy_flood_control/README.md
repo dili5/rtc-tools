@@ -44,7 +44,7 @@ These are set as `fixed = false` inputs and mapped to each
 `baoshihu_yihongdao` is no longer a direct control input; its discharge is
 computed from `baoshihu_shengtaiku` water level using a weir equation.
 For solver robustness (RTC-Tools 2.7.3/IPOPT), the weir head and max-flow cap
-are implemented with smooth approximations.
+are implemented with smooth approximations and a small positive head floor.
 
 ### Outputs (for flood-control evaluation)
 
