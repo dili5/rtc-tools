@@ -1,3 +1,5 @@
+import numpy as np
+
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )
@@ -83,6 +85,42 @@ class TgsyOptimization(
             goals.append(SmoothControlGoal(control, function_nominal=100.0, priority=30))
 
         return goals
+
+    def path_constraints(self, ensemble_member):
+        """
+        Enforce hard operational limits from timeseries_import.csv.
+        """
+        constraints = super().path_constraints(ensemble_member)
+
+        # Hard flood-discharge limits at receiving rivers.
+        constraints.append((self.state("xixianghe_Q"), 0.0, self.get_timeseries("xixianghe_Q_max")))
+        constraints.append((self.state("maozhouhe_Q"), 0.0, self.get_timeseries("maozhouhe_Q_max")))
+
+        # Hard storage volume bands for key reservoirs.
+        constraints.append(
+            (
+                self.state("shiyan_storage_V"),
+                self.get_timeseries("shiyan_storage_V_min"),
+                self.get_timeseries("shiyan_storage_V_max"),
+            )
+        )
+        constraints.append(
+            (
+                self.state("tiegang_storage_V"),
+                self.get_timeseries("tiegang_storage_V_min"),
+                self.get_timeseries("tiegang_storage_V_max"),
+            )
+        )
+
+        # Optional hard lower bounds on municipal water-supply flows.
+        constraints.append(
+            (self.state("shiyan_gongshui_Q"), self.get_timeseries("shiyan_gongshui_Q_min"), np.inf)
+        )
+        constraints.append(
+            (self.state("tiegang_gongshui_Q"), self.get_timeseries("tiegang_gongshui_Q_min"), np.inf)
+        )
+
+        return constraints
 
 
 if __name__ == "__main__":
