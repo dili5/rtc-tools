@@ -29,6 +29,7 @@ class VhCurveExcelMixin:
     # Excel V is provided in 10^4 m3 for this project, convert to m3.
     vh_curve_volume_multiplier = 1.0e4
     vh_curve_log_diagnostics = True
+    vh_curve_enforce_monotonic_h = True
     vh_curve_objects = (
         "shiyan_shengtaiku",
         "baoshihu_shengtaiku",
@@ -318,6 +319,13 @@ class VhCurveExcelMixin:
                         )
                         continue
 
+                    vh_pairs, modified = self._sanitize_vh_pairs(vh_pairs)
+                    if modified:
+                        logger.warning(
+                            f"Sheet {sheet_name} for {object_name} was sanitized "
+                            "(enforced finite/monotonic V-H consistency)."
+                        )
+
                     curves[object_name] = vh_pairs
                     self._vh_curve_sources[object_name] = f"excel:{sheet_name}"
         except Exception as error:
@@ -356,15 +364,26 @@ class VhCurveExcelMixin:
             )
 
             if not mono_v:
-                logger.warning(f"V-H[{object_name}] has non-increasing V sequence: dV={dv}")
+                bad = np.where(dv <= 0)[0]
+                logger.warning(
+                    f"V-H[{object_name}] has {len(bad)} non-increasing V steps; "
+                    f"min_dV={dv.min():.6g}, first_bad_indices={bad[:5].tolist()}"
+                )
             if not mono_h:
-                logger.warning(f"V-H[{object_name}] has non-monotonic H sequence: dH={dh}")
+                bad = np.where(dh < 0)[0]
+                logger.warning(
+                    f"V-H[{object_name}] has {len(bad)} decreasing H steps; "
+                    f"min_dH={dh.min():.6g}, first_bad_indices={bad[:5].tolist()}"
+                )
 
     def _log_curve_initial_state_diagnostics(self):
         if not self.vh_curve_log_diagnostics:
             return
 
         curves = self._load_vh_curves()
+        if not hasattr(self, "_SimulationProblem__start"):
+            logger.debug("Skipping V-H initial-state diagnostics before simulation start is defined.")
+            return
         try:
             initial_state = self.initial_state()
         except Exception as error:
@@ -390,6 +409,42 @@ class VhCurveExcelMixin:
                 logger.info(message)
             else:
                 logger.warning(message)
+
+    def _sanitize_vh_pairs(self, vh_pairs):
+        """
+        Sanitize V-H points to improve numerical robustness.
+        """
+        modified = False
+        arr = np.array(vh_pairs, dtype=float)
+
+        # Keep finite rows only.
+        finite_mask = np.isfinite(arr[:, 0]) & np.isfinite(arr[:, 1])
+        if not np.all(finite_mask):
+            arr = arr[finite_mask]
+            modified = True
+
+        # Sort by V and collapse duplicate V by keeping highest H.
+        arr = arr[np.argsort(arr[:, 0])]
+        unique_v = []
+        unique_h = []
+        for v, h in arr:
+            if unique_v and np.isclose(v, unique_v[-1]):
+                if h > unique_h[-1]:
+                    unique_h[-1] = h
+                    modified = True
+            else:
+                unique_v.append(v)
+                unique_h.append(h)
+        arr = np.column_stack((np.array(unique_v, dtype=float), np.array(unique_h, dtype=float)))
+
+        # Enforce non-decreasing H for physical V-H relations.
+        if self.vh_curve_enforce_monotonic_h and len(arr) >= 2:
+            h_mono = np.maximum.accumulate(arr[:, 1])
+            if np.any(h_mono != arr[:, 1]):
+                arr[:, 1] = h_mono
+                modified = True
+
+        return arr, modified
 
     def _candidate_sheet_names(self, object_name):
         aliases = list(self.vh_curve_sheet_aliases.get(object_name, ()))
