@@ -67,6 +67,8 @@ model tgsy
   input SI.VolumeFlowRate jiuwei_Q_in(fixed = true);
   input SI.VolumeFlowRate shiyan_else_Q_in(fixed = true);
   input SI.VolumeFlowRate tiegang_else_Q_in(fixed = true);
+  input SI.VolumeFlowRate shiyan_gongshui_Q_set(fixed = false, min = 0.0, max = 1000.0);
+  input SI.VolumeFlowRate tiegang_gongshui_Q_set(fixed = false, min = 0.0, max = 1000.0);
 
   input SI.VolumeFlowRate jiuwei_liantongzha_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate yingrenshi_xieshuizha_Q(fixed = false, min = 0.0, max = 1500.0);
@@ -95,12 +97,17 @@ model tgsy
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
 
 equation
+  // Junction to outfall is modeled without local storage dynamics.
+  der(xixianghe_junction.V) = 0;
+
   shiyanhe_inflow.Q = shiyanhe_Q_in;
   baoshihu_inflow.Q = baoshihu_Q_in;
   yingrenshi_inflow.Q = yingrenshi_Q_in;
   jiuwei_inflow.Q = jiuwei_Q_in;
   shiyan_else_inflow.Q = shiyan_else_Q_in;
   tiegang_else_inflow.Q = tiegang_else_Q_in;
+  shiyan_storage.QLateral[1].Q = shiyan_gongshui_Q_set;
+  tiegang_storage.QLateral[5].Q = tiegang_gongshui_Q_set;
 
   jiuwei_liantongzha.Q = jiuwei_liantongzha_Q;
   yingrenshi_xieshuizha.Q = yingrenshi_xieshuizha_Q;

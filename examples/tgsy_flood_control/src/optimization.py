@@ -143,6 +143,8 @@ class TgsyOptimization(
             "shiyan_yihongdaozha_Q",
             "shengyanshengtaiku_yan_Q",
             "shiyan_shengtaiku_xieshuizha_Q",
+            "shiyan_gongshui_Q_set",
+            "tiegang_gongshui_Q_set",
         ):
             goals.append(SmoothControlGoal(control, function_nominal=100.0, priority=40))
 

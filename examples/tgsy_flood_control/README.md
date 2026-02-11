@@ -69,6 +69,7 @@ Use these three layers:
      - `xixianghe_Q_max`, `maozhouhe_Q_max`
      - `*_V_min`, `*_V_max`
      - `shiyan_gongshui_Q_min`, `tiegang_gongshui_Q_min`
+     - `shiyan_gongshui_Q_set`, `tiegang_gongshui_Q_set` (supply branch setpoints)
 
 ## 2.1) Important: avoid over-constrained topology
 
