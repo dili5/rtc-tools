@@ -8,6 +8,9 @@ simulation/optimization workflow.
 Before running, make sure your Python environment already contains the
 RTC-Tools runtime dependencies (including `casadi` and `pymoca`).
 
+The V-H curves are read from `model/Z-V-Q.xlsx` by
+`src/vh_curve_excel_mixin.py` (no extra Python package required).
+
 ## 1) What was bound in `model/tgsy.mo`
 
 ### Exogenous inflows (forecast/measurement)
@@ -63,6 +66,26 @@ computed from `baoshihu_shengtaiku` water level using a weir equation.
   - `shiyan_storage_H`
   - `tiegang_storage_H`
   - `xixianghe_junction_H`
+
+### V-H curve source workbook
+
+`model/Z-V-Q.xlsx` must contain one sheet per Integrator object:
+
+- `shiyan_shengtaikuZ-V`
+- `baoshihu_shengtaikuZ-V`
+- `yingrenshi_shengtaiku_storageZ-V`
+- `jiuwei_shengtaikuZ-V`
+- `shiyan_storageZ-V`
+- `tiegang_storageZ-V`
+- `xixianghe_junctionZ-V`
+
+For each sheet:
+
+- Column A: `Z` (water level)
+- Column B: `V` (storage volume)
+
+Rows with non-numeric values are ignored automatically (so header rows are
+allowed).
 
 ## 2) Property binding strategy
 

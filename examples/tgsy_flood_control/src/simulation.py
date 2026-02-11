@@ -1,11 +1,13 @@
 import logging
 
+from vh_curve_excel_mixin import VhCurveExcelMixin
+
 from rtctools.simulation.csv_mixin import CSVMixin
 from rtctools.simulation.simulation_problem import SimulationProblem
 from rtctools.util import run_simulation_problem
 
 
-class TgsySimulation(CSVMixin, SimulationProblem):
+class TgsySimulation(VhCurveExcelMixin, CSVMixin, SimulationProblem):
     """
     Flood-process simulation for the tgsy engineering system.
 

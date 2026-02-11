@@ -85,7 +85,7 @@ model tgsy
 
   parameter Real[5, 2] shiyan_shengtaiku_vh_curve = [2.0e5, 11.0; 8.0e5, 11.8; 2.0e6, 12.7; 3.8e6, 13.7; 5.8e6, 14.8];
   parameter Real[5, 2] baoshihu_shengtaiku_vh_curve = [3.8e4, 7.3; 1.0e5, 7.8; 2.0e5, 8.4; 3.2e5, 8.9; 3.8e5, 9.2];
-  parameter Real[5, 2] yingrenshi_shengtaiku_vh_curve = [1.0e5, 7.0; 4.0e5, 7.6; 8.0e5, 8.1; 1.2e6, 8.5; 1.7e6, 8.9];
+  parameter Real[5, 2] yingrenshi_shengtaiku_storage_vh_curve = [1.0e5, 7.0; 4.0e5, 7.6; 8.0e5, 8.1; 1.2e6, 8.5; 1.7e6, 8.9];
   parameter Real[5, 2] jiuwei_shengtaiku_vh_curve = [2.0e5, 6.5; 6.0e5, 7.0; 1.0e6, 7.4; 1.6e6, 7.9; 2.2e6, 8.3];
   parameter Real[5, 2] shiyan_storage_vh_curve = [2.6e6, 10.2; 8.0e6, 10.9; 1.6e7, 11.6; 2.4e7, 12.3; 3.2e7, 13.0];
   parameter Real[5, 2] tiegang_storage_vh_curve = [2.1e5, 5.5; 1.0e7, 6.0; 3.0e7, 6.8; 6.0e7, 7.8; 1.0e8, 9.0];
@@ -163,7 +163,7 @@ equation
 
   shiyan_shengtaiku_H = level_from_v_curve(shiyan_shengtaiku.V, shiyan_shengtaiku_vh_curve);
   baoshihu_shengtaiku_H = level_from_v_curve(baoshihu_shengtaiku.V, baoshihu_shengtaiku_vh_curve);
-  yingrenshi_shengtaiku_H = level_from_v_curve(yingrenshi_shengtaiku_storage.V, yingrenshi_shengtaiku_vh_curve);
+  yingrenshi_shengtaiku_H = level_from_v_curve(yingrenshi_shengtaiku_storage.V, yingrenshi_shengtaiku_storage_vh_curve);
   jiuwei_shengtaiku_H = level_from_v_curve(jiuwei_shengtaiku.V, jiuwei_shengtaiku_vh_curve);
   shiyan_storage_H = level_from_v_curve(shiyan_storage.V, shiyan_storage_vh_curve);
   tiegang_storage_H = level_from_v_curve(tiegang_storage.V, tiegang_storage_vh_curve);

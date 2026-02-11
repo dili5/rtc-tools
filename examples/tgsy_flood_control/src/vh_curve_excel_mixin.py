@@ -1,0 +1,253 @@
+import logging
+import re
+import zipfile
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+import numpy as np
+
+logger = logging.getLogger("rtctools")
+
+
+class VhCurveExcelMixin:
+    """
+    Load V-H curves for Integrator objects from model/Z-V-Q.xlsx.
+
+    Workbook convention:
+    - One sheet per Integrator object.
+    - Sheet name: <object_name>Z-V (e.g. baoshihu_shengtaikuZ-V).
+    - Column A: Z (water level), Column B: V (storage volume).
+
+    Model convention:
+    - Parameter names in Modelica are <object_name>_vh_curve[i,j], with
+      j=1 for V and j=2 for H.
+    """
+
+    vh_curve_workbook = "Z-V-Q.xlsx"
+    vh_curve_sheet_suffix = "Z-V"
+    vh_curve_objects = (
+        "shiyan_shengtaiku",
+        "baoshihu_shengtaiku",
+        "yingrenshi_shengtaiku_storage",
+        "jiuwei_shengtaiku",
+        "shiyan_storage",
+        "tiegang_storage",
+        "xixianghe_junction",
+    )
+
+    def __init__(self, **kwargs):
+        self._vh_model_folder = kwargs.get("model_folder")
+        self._vh_curves_cache = None
+        super().__init__(**kwargs)
+
+    def parameters(self, *args, **kwargs):
+        parameters = super().parameters(*args, **kwargs)
+        self._inject_vh_curve_parameters(parameters)
+        return parameters
+
+    def _inject_vh_curve_parameters(self, parameters):
+        curves = self._load_vh_curves()
+        if not curves:
+            return
+
+        for object_name, vh_pairs in curves.items():
+            parameter_prefix = f"{object_name}_vh_curve"
+            self._assign_curve_to_parameter_prefix(parameters, parameter_prefix, vh_pairs)
+
+    def _assign_curve_to_parameter_prefix(self, parameters, parameter_prefix, vh_pairs):
+        pattern = re.compile(rf"^{re.escape(parameter_prefix)}\[(\d+),(\d+)\]$")
+        indexed_keys = []
+
+        for key in parameters:
+            match = pattern.match(key)
+            if match:
+                indexed_keys.append((key, int(match.group(1)), int(match.group(2))))
+
+        if not indexed_keys:
+            if parameter_prefix in parameters:
+                parameters[parameter_prefix] = vh_pairs
+            else:
+                logger.debug(f"No Modelica parameter found for V-H curve prefix {parameter_prefix}.")
+            return
+
+        point_count = max(i for _, i, _ in indexed_keys)
+        fitted_curve = self._resample_curve(vh_pairs, point_count)
+
+        for key, i, j in indexed_keys:
+            if j in (1, 2):
+                parameters[key] = float(fitted_curve[i - 1, j - 1])
+
+    @staticmethod
+    def _resample_curve(vh_pairs, target_count):
+        if target_count <= 1 or len(vh_pairs) == target_count:
+            return vh_pairs
+
+        v_values = vh_pairs[:, 0]
+        h_values = vh_pairs[:, 1]
+
+        target_v = np.linspace(v_values[0], v_values[-1], target_count)
+        target_h = np.interp(target_v, v_values, h_values)
+        return np.column_stack((target_v, target_h))
+
+    def _load_vh_curves(self):
+        if self._vh_curves_cache is not None:
+            return self._vh_curves_cache
+
+        workbook_path = self._resolve_workbook_path()
+        if not workbook_path.exists():
+            logger.warning(
+                f"V-H workbook not found at {workbook_path}. "
+                "Modelica default V-H parameters will be used."
+            )
+            self._vh_curves_cache = {}
+            return self._vh_curves_cache
+
+        try:
+            with zipfile.ZipFile(workbook_path, "r") as workbook:
+                shared_strings = self._read_shared_strings(workbook)
+                sheet_map = self._sheet_name_to_xml_path(workbook)
+
+                curves = {}
+                for object_name in self.vh_curve_objects:
+                    sheet_name = f"{object_name}{self.vh_curve_sheet_suffix}"
+                    sheet_xml_path = sheet_map.get(sheet_name)
+                    if sheet_xml_path is None:
+                        logger.warning(
+                            f"Sheet {sheet_name} not found in {workbook_path.name}; "
+                            f"falling back to default curve for {object_name}."
+                        )
+                        continue
+
+                    vh_pairs = self._read_sheet_vh_pairs(workbook, sheet_xml_path, shared_strings)
+                    if vh_pairs is None:
+                        logger.warning(
+                            f"Sheet {sheet_name} has insufficient numeric data; "
+                            f"falling back to default curve for {object_name}."
+                        )
+                        continue
+
+                    curves[object_name] = vh_pairs
+        except Exception as error:
+            logger.warning(
+                f"Failed to read V-H curves from workbook {workbook_path}: {error}. "
+                "Modelica default V-H parameters will be used."
+            )
+            curves = {}
+
+        self._vh_curves_cache = curves
+        return self._vh_curves_cache
+
+    def _resolve_workbook_path(self):
+        if self._vh_model_folder is not None:
+            return Path(self._vh_model_folder) / self.vh_curve_workbook
+
+        if hasattr(self, "_input_folder"):
+            return Path(self._input_folder).parent / "model" / self.vh_curve_workbook
+
+        return Path(self.vh_curve_workbook)
+
+    @staticmethod
+    def _read_shared_strings(workbook):
+        try:
+            xml_content = workbook.read("xl/sharedStrings.xml")
+        except KeyError:
+            return []
+
+        root = ET.fromstring(xml_content)
+        strings = []
+        for item in root.findall(".//{*}si"):
+            strings.append("".join(item.itertext()))
+        return strings
+
+    @staticmethod
+    def _sheet_name_to_xml_path(workbook):
+        workbook_root = ET.fromstring(workbook.read("xl/workbook.xml"))
+        relationships_root = ET.fromstring(workbook.read("xl/_rels/workbook.xml.rels"))
+
+        relationship_targets = {}
+        for relationship in relationships_root.findall(".//{*}Relationship"):
+            relationship_targets[relationship.get("Id")] = relationship.get("Target")
+
+        name_to_path = {}
+        rel_ns = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+        for sheet in workbook_root.findall(".//{*}sheet"):
+            sheet_name = sheet.get("name")
+            rel_id = sheet.get(rel_ns)
+            target = relationship_targets.get(rel_id)
+            if not sheet_name or not target:
+                continue
+            name_to_path[sheet_name] = "xl/" + target.lstrip("/")
+
+        return name_to_path
+
+    def _read_sheet_vh_pairs(self, workbook, sheet_xml_path, shared_strings):
+        sheet_root = ET.fromstring(workbook.read(sheet_xml_path))
+        vh_pairs = []
+
+        for row in sheet_root.findall(".//{*}row"):
+            row_values = {}
+            for cell in row.findall("{*}c"):
+                reference = cell.get("r", "")
+                column_index = self._column_index(reference)
+                if column_index not in (1, 2):
+                    continue
+                row_values[column_index] = self._cell_to_text(cell, shared_strings)
+
+            z_value = self._to_float(row_values.get(1))
+            v_value = self._to_float(row_values.get(2))
+            if z_value is not None and v_value is not None:
+                vh_pairs.append((v_value, z_value))
+
+        if len(vh_pairs) < 2:
+            return None
+
+        vh_pairs = np.array(vh_pairs, dtype=float)
+        vh_pairs = vh_pairs[np.argsort(vh_pairs[:, 0])]
+        _, unique_indices = np.unique(vh_pairs[:, 0], return_index=True)
+        vh_pairs = vh_pairs[np.sort(unique_indices)]
+
+        if len(vh_pairs) < 2:
+            return None
+
+        return vh_pairs
+
+    @staticmethod
+    def _column_index(cell_reference):
+        match = re.match(r"([A-Za-z]+)", cell_reference)
+        if match is None:
+            return None
+
+        letters = match.group(1).upper()
+        index = 0
+        for letter in letters:
+            index = index * 26 + (ord(letter) - ord("A") + 1)
+        return index
+
+    @staticmethod
+    def _cell_to_text(cell, shared_strings):
+        cell_type = cell.get("t")
+        if cell_type == "inlineStr":
+            inline = cell.find("{*}is")
+            return "".join(inline.itertext()) if inline is not None else None
+
+        value = cell.find("{*}v")
+        if value is None or value.text is None:
+            return None
+
+        text = value.text
+        if cell_type == "s":
+            index = int(float(text))
+            return shared_strings[index] if index < len(shared_strings) else None
+        return text
+
+    @staticmethod
+    def _to_float(value):
+        if value is None:
+            return None
+        value = str(value).strip()
+        if not value:
+            return None
+        try:
+            return float(value)
+        except ValueError:
+            return None

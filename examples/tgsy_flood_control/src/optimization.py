@@ -1,5 +1,7 @@
 import numpy as np
 
+from vh_curve_excel_mixin import VhCurveExcelMixin
+
 from rtctools.optimization.collocated_integrated_optimization_problem import (
     CollocatedIntegratedOptimizationProblem,
 )
@@ -41,6 +43,7 @@ class SmoothControlGoal(Goal):
 
 class TgsyOptimization(
     GoalProgrammingMixin,
+    VhCurveExcelMixin,
     CSVMixin,
     ModelicaMixin,
     CollocatedIntegratedOptimizationProblem,
