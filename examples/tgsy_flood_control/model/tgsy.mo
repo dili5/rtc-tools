@@ -1,6 +1,28 @@
 model tgsy
   import SI = Modelica.Units.SI;
 
+  function level_from_v_curve
+    input SI.Volume V;
+    input Real[:, 2] vh_curve;
+    output SI.Position H;
+  protected
+    Integer n;
+  algorithm
+    n := size(vh_curve, 1);
+    H := vh_curve[1, 2];
+    if V <= vh_curve[1, 1] then
+      H := vh_curve[1, 2];
+    elseif V >= vh_curve[n, 1] then
+      H := vh_curve[n, 2];
+    else
+      for i in 1:n - 1 loop
+        if V >= vh_curve[i, 1] and V <= vh_curve[i + 1, 1] then
+          H := vh_curve[i, 2] + (vh_curve[i + 1, 2] - vh_curve[i, 2]) * (V - vh_curve[i, 1]) / (vh_curve[i + 1, 1] - vh_curve[i, 1]);
+        end if;
+      end for;
+    end if;
+  end level_from_v_curve;
+
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Inflow shiyanhe_inflow annotation(
     Placement(transformation(origin = {115, 95}, extent = {{5, -5}, {-5, 5}})));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Inflow baoshihu_inflow annotation(
@@ -61,6 +83,19 @@ model tgsy
   Deltares.ChannelFlow.SimpleRouting.Structures.DischargeControlledStructure shiyan_shengtaiku_xieshuizha annotation(
     Placement(transformation(origin = {85, 105}, extent = {{5, -5}, {-5, 5}}, rotation = -90)));
 
+  parameter Real[5, 2] shiyan_shengtaiku_vh_curve = [2.0e5, 11.0; 8.0e5, 11.8; 2.0e6, 12.7; 3.8e6, 13.7; 5.8e6, 14.8];
+  parameter Real[5, 2] baoshihu_shengtaiku_vh_curve = [3.8e4, 7.3; 1.0e5, 7.8; 2.0e5, 8.4; 3.2e5, 8.9; 3.8e5, 9.2];
+  parameter Real[5, 2] yingrenshi_shengtaiku_vh_curve = [1.0e5, 7.0; 4.0e5, 7.6; 8.0e5, 8.1; 1.2e6, 8.5; 1.7e6, 8.9];
+  parameter Real[5, 2] jiuwei_shengtaiku_vh_curve = [2.0e5, 6.5; 6.0e5, 7.0; 1.0e6, 7.4; 1.6e6, 7.9; 2.2e6, 8.3];
+  parameter Real[5, 2] shiyan_storage_vh_curve = [2.6e6, 10.2; 8.0e6, 10.9; 1.6e7, 11.6; 2.4e7, 12.3; 3.2e7, 13.0];
+  parameter Real[5, 2] tiegang_storage_vh_curve = [2.1e5, 5.5; 1.0e7, 6.0; 3.0e7, 6.8; 6.0e7, 7.8; 1.0e8, 9.0];
+  parameter Real[5, 2] xixianghe_junction_vh_curve = [0.0, 2.0; 5.0e3, 2.2; 1.0e4, 2.35; 2.0e4, 2.5; 4.0e4, 2.7];
+
+  parameter Real baoshihu_yihongdao_weir_coefficient = 1.7;
+  parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
+  parameter SI.Position baoshihu_yihongdao_crest_level = 8.8;
+  parameter SI.VolumeFlowRate baoshihu_yihongdao_q_max = 1500.0;
+
   input SI.VolumeFlowRate shiyanhe_Q_in(fixed = true);
   input SI.VolumeFlowRate baoshihu_Q_in(fixed = true);
   input SI.VolumeFlowRate yingrenshi_Q_in(fixed = true);
@@ -76,7 +111,6 @@ model tgsy
   input SI.VolumeFlowRate jiuwei_xieshuizha_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate tiegang_yihongdao_gate_Q(fixed = false, min = 0.0, max = 2000.0);
   input SI.VolumeFlowRate baoshihu_xieshuizha_Q(fixed = false, min = 0.0, max = 1500.0);
-  input SI.VolumeFlowRate baoshihu_yihongdao_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate shiyan_yihongdaozha_Q(fixed = false, min = 0.0, max = 2000.0);
   input SI.VolumeFlowRate shengyanshengtaiku_yan_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate shiyan_shengtaiku_xieshuizha_Q(
@@ -91,10 +125,18 @@ model tgsy
   output SI.Volume jiuwei_shengtaiku_V = jiuwei_shengtaiku.V;
   output SI.Volume shiyan_storage_V = shiyan_storage.V;
   output SI.Volume tiegang_storage_V = tiegang_storage.V;
+  output SI.Position shiyan_shengtaiku_H;
+  output SI.Position baoshihu_shengtaiku_H;
+  output SI.Position yingrenshi_shengtaiku_H;
+  output SI.Position jiuwei_shengtaiku_H;
+  output SI.Position shiyan_storage_H;
+  output SI.Position tiegang_storage_H;
+  output SI.Position xixianghe_junction_H;
   output SI.VolumeFlowRate xixianghe_Q = xixianghe.QIn.Q;
   output SI.VolumeFlowRate maozhouhe_Q = maozhouhe.QIn.Q;
   output SI.VolumeFlowRate shiyan_gongshui_Q = shiyan_gongshui.QIn.Q;
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
+  output SI.VolumeFlowRate baoshihu_yihongdao_Q_calc;
 
 equation
   // Junction to outfall is modeled without local storage dynamics.
@@ -115,10 +157,23 @@ equation
   jiuwei_xieshuizha.Q = jiuwei_xieshuizha_Q;
   tiegang_yihongdao_gate.Q = tiegang_yihongdao_gate_Q;
   baoshihu_xieshuizha.Q = baoshihu_xieshuizha_Q;
-  baoshihu_yihongdao.Q = baoshihu_yihongdao_Q;
   shiyan_yihongdaozha.Q = shiyan_yihongdaozha_Q;
   shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q;
   shiyan_shengtaiku_xieshuizha.Q = shiyan_shengtaiku_xieshuizha_Q;
+
+  shiyan_shengtaiku_H = level_from_v_curve(shiyan_shengtaiku.V, shiyan_shengtaiku_vh_curve);
+  baoshihu_shengtaiku_H = level_from_v_curve(baoshihu_shengtaiku.V, baoshihu_shengtaiku_vh_curve);
+  yingrenshi_shengtaiku_H = level_from_v_curve(yingrenshi_shengtaiku_storage.V, yingrenshi_shengtaiku_vh_curve);
+  jiuwei_shengtaiku_H = level_from_v_curve(jiuwei_shengtaiku.V, jiuwei_shengtaiku_vh_curve);
+  shiyan_storage_H = level_from_v_curve(shiyan_storage.V, shiyan_storage_vh_curve);
+  tiegang_storage_H = level_from_v_curve(tiegang_storage.V, tiegang_storage_vh_curve);
+  xixianghe_junction_H = level_from_v_curve(xixianghe_junction.V, xixianghe_junction_vh_curve);
+
+  baoshihu_yihongdao_Q_calc = min(
+    baoshihu_yihongdao_q_max,
+    baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * noEvent(max(baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level, 0.0)) ^ (3.0 / 2.0)
+  );
+  baoshihu_yihongdao.Q = baoshihu_yihongdao_Q_calc;
 
   connect(shiyan_storage.QLateral[1], shiyan_gongshui.QIn) annotation(
     Line(points = {{50, 63.2}, {44, 63.2}, {44, 50}, {37, 50}}, arrow = {Arrow.None, Arrow.Filled}));

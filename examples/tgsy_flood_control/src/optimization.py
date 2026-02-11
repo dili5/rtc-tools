@@ -62,7 +62,6 @@ class TgsyOptimization(
         "jiuwei_xieshuizha_Q",
         "tiegang_yihongdao_gate_Q",
         "baoshihu_xieshuizha_Q",
-        "baoshihu_yihongdao_Q",
         "shiyan_yihongdaozha_Q",
         "shengyanshengtaiku_yan_Q",
         "shiyan_shengtaiku_xieshuizha_Q",

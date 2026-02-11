@@ -33,10 +33,12 @@ These are set as `fixed = false` inputs and mapped to each
 - `jiuwei_xieshuizha_Q`
 - `tiegang_yihongdao_gate_Q`
 - `baoshihu_xieshuizha_Q`
-- `baoshihu_yihongdao_Q`
 - `shiyan_yihongdaozha_Q`
 - `shengyanshengtaiku_yan_Q`
 - `shiyan_shengtaiku_xieshuizha_Q`
+
+`baoshihu_yihongdao` is no longer a direct control input; its discharge is
+computed from `baoshihu_shengtaiku` water level using a weir equation.
 
 ### Outputs (for flood-control evaluation)
 
@@ -53,6 +55,14 @@ These are set as `fixed = false` inputs and mapped to each
 - Water-supply outflows:
   - `shiyan_gongshui_Q`
   - `tiegang_gongshui_Q`
+- Water levels converted from V-H curves (all Integrator nodes):
+  - `shiyan_shengtaiku_H`
+  - `baoshihu_shengtaiku_H`
+  - `yingrenshi_shengtaiku_H`
+  - `jiuwei_shengtaiku_H`
+  - `shiyan_storage_H`
+  - `tiegang_storage_H`
+  - `xixianghe_junction_H`
 
 ## 2) Property binding strategy
 
@@ -70,6 +80,7 @@ Use these three layers:
      - `*_V_min`, `*_V_max`
      - `shiyan_gongshui_Q_min`, `tiegang_gongshui_Q_min`
      - `shiyan_gongshui_Q_set`, `tiegang_gongshui_Q_set` (supply branch setpoints)
+   - If an old file still contains `baoshihu_yihongdao_Q`, it is now ignored.
 
 ## 2.1) Important: avoid over-constrained topology
 
@@ -98,12 +109,12 @@ cd examples/tgsy_flood_control/src
 python3 optimization.py
 ```
 
-Optimization script (`src/optimization.py`) uses four priority layers:
+Optimization script (`src/optimization.py`) uses:
 
-1. Minimize downstream flood risk (`xixianghe_Q`, `maozhouhe_Q`);
-2. Meet water-supply minimum flows;
-3. Keep storage volumes inside operational bands;
-4. Smooth gate movement (`dQ/dt`) to avoid abrupt operations.
+1. Hard constraints from timeseries limits (`Q_max`, `V_min`, `V_max`);
+2. Primary objectives to minimize `xixianghe_Q`, `shiyan_storage_V`, and
+   `tiegang_storage_V`;
+3. Smoothing on control trajectories (`dQ/dt`) as a lower-priority objective.
 
 ## 5) Suggested real-time loop
 
