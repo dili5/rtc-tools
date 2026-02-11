@@ -37,7 +37,6 @@ class VhCurveExcelMixin:
         "jiuwei_shengtaiku",
         "shiyan_storage",
         "tiegang_storage",
-        "xixianghe_junction",
     )
     # Object -> allowed sheet names (in order of preference).
     vh_curve_sheet_aliases = {
@@ -47,7 +46,7 @@ class VhCurveExcelMixin:
         ),
     }
     # Missing sheets for these objects are acceptable and will use defaults.
-    vh_curve_optional_objects = {"xixianghe_junction"}
+    vh_curve_optional_objects = set()
     vh_curve_defaults = {
         "shiyan_shengtaiku": np.array(
             [
@@ -106,16 +105,6 @@ class VhCurveExcelMixin:
                 [3.0e7, 6.8],
                 [6.0e7, 7.8],
                 [1.0e8, 9.0],
-            ],
-            dtype=float,
-        ),
-        "xixianghe_junction": np.array(
-            [
-                [0.0, 2.0],
-                [5.0e3, 2.2],
-                [1.0e4, 2.35],
-                [2.0e4, 2.5],
-                [4.0e4, 2.7],
             ],
             dtype=float,
         ),

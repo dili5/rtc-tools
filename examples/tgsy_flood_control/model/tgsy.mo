@@ -46,13 +46,10 @@ model tgsy
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Inflow tiegang_else_inflow annotation(
     Placement(transformation(origin = {54, 14}, extent = {{-4, -4}, {4, 4}})));
 
-  Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal xixianghe annotation(
-    Placement(transformation(origin = {55, -55}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
-  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator xixianghe_junction(
-    n_QLateral = 1,
-    V(start = 1000.0, fixed = true, nominal = 1e4)
-  ) annotation(
-    Placement(transformation(origin = {55, -44}, extent = {{-4, -4}, {4, 4}}, rotation = -90)));
+  Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal xixianghe_from_jiuwei annotation(
+    Placement(transformation(origin = {48, -55}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
+  Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal xixianghe_from_tiegang annotation(
+    Placement(transformation(origin = {62, -55}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal maozhouhe annotation(
     Placement(transformation(origin = {65, 115}, extent = {{5, 5}, {-5, -5}})));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal shiyan_gongshui annotation(
@@ -163,17 +160,6 @@ model tgsy
   parameter Real tiegang_storage_vh_h4 = 7.8;
   parameter Real tiegang_storage_vh_h5 = 9.0;
 
-  parameter Real xixianghe_junction_vh_v1 = 0.0;
-  parameter Real xixianghe_junction_vh_v2 = 5.0e3;
-  parameter Real xixianghe_junction_vh_v3 = 1.0e4;
-  parameter Real xixianghe_junction_vh_v4 = 2.0e4;
-  parameter Real xixianghe_junction_vh_v5 = 4.0e4;
-  parameter Real xixianghe_junction_vh_h1 = 2.0;
-  parameter Real xixianghe_junction_vh_h2 = 2.2;
-  parameter Real xixianghe_junction_vh_h3 = 2.35;
-  parameter Real xixianghe_junction_vh_h4 = 2.5;
-  parameter Real xixianghe_junction_vh_h5 = 2.7;
-
   parameter Real baoshihu_yihongdao_weir_coefficient = 1.7;
   parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
   parameter SI.Position baoshihu_yihongdao_crest_level = 8.8;
@@ -217,8 +203,7 @@ model tgsy
   output SI.Position jiuwei_shengtaiku_H;
   output SI.Position shiyan_storage_H;
   output SI.Position tiegang_storage_H;
-  output SI.Position xixianghe_junction_H;
-  output SI.VolumeFlowRate xixianghe_Q = xixianghe.QIn.Q;
+  output SI.VolumeFlowRate xixianghe_Q = xixianghe_from_jiuwei.QIn.Q + xixianghe_from_tiegang.QIn.Q;
   output SI.VolumeFlowRate maozhouhe_Q = maozhouhe.QIn.Q;
   output SI.VolumeFlowRate shiyan_gongshui_Q = shiyan_gongshui.QIn.Q;
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
@@ -228,9 +213,6 @@ model tgsy
   output SI.VolumeFlowRate baoshihu_yihongdao_Q_free;
 
 equation
-  // Junction to outfall is modeled without local storage dynamics.
-  der(xixianghe_junction.V) = 0;
-
   shiyanhe_inflow.Q = shiyanhe_Q_in;
   baoshihu_inflow.Q = baoshihu_Q_in;
   yingrenshi_inflow.Q = yingrenshi_Q_in;
@@ -328,19 +310,6 @@ equation
     tiegang_storage_vh_h4,
     tiegang_storage_vh_h5
   );
-  xixianghe_junction_H = level_from_v_curve(
-    xixianghe_junction.V,
-    xixianghe_junction_vh_v1,
-    xixianghe_junction_vh_v2,
-    xixianghe_junction_vh_v3,
-    xixianghe_junction_vh_v4,
-    xixianghe_junction_vh_v5,
-    xixianghe_junction_vh_h1,
-    xixianghe_junction_vh_h2,
-    xixianghe_junction_vh_h3,
-    xixianghe_junction_vh_h4,
-    xixianghe_junction_vh_h5
-  );
 
   // Smooth positive-part head to avoid singular Hessian at crest level.
   baoshihu_yihongdao_head_raw = 0.5 * (
@@ -381,12 +350,12 @@ equation
     Line(points = {{74.8, 22}, {68, 22}, {68, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(jiuwei_shengtaiku.QLateral[2], jiuwei_xieshuizha.QIn) annotation(
     Line(points = {{26.3, 9.2}, {34.2, 9.2}, {34.2, -3}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(jiuwei_xieshuizha.QOut, xixianghe_junction.QIn) annotation(
-    Line(points = {{34, -9.2}, {34, -30.7}, {55, -30.7}, {55, -40.8}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(jiuwei_xieshuizha.QOut, xixianghe_from_jiuwei.QIn) annotation(
+    Line(points = {{34, -9.2}, {34, -30.7}, {48, -30.7}, {48, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(tiegang_storage.QOut, tiegang_yihongdao_gate.QIn) annotation(
     Line(points = {{70, -26}, {70, -34}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(tiegang_yihongdao_gate.QOut, xixianghe_junction.QLateral[1]) annotation(
-    Line(points = {{70, -41.2}, {58.2, -41.2}, {58.2, -44}}, arrow = {Arrow.None, Arrow.Filled}));
+  connect(tiegang_yihongdao_gate.QOut, xixianghe_from_tiegang.QIn) annotation(
+    Line(points = {{70, -41.2}, {62, -41.2}, {62, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_shengtaiku.QOut, baoshihu_xieshuizha.QIn) annotation(
     Line(points = {{106, 17.2}, {106, 20.3}, {109, 20.3}, {109, 26.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_xieshuizha.QOut, yingrenshi_shengtaiku_storage.QLateral[1]) annotation(
@@ -411,8 +380,6 @@ equation
     Line(points = {{94, 32.8}, {94, 29.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(yingrenshi_shengtaiku_storage.QLateral[2], yingrenshi_liantongzha.QIn) annotation(
     Line(points = {{91.2, 29.2}, {84, 29.2}, {84, 22}, {80.8, 22}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(xixianghe_junction.QOut, xixianghe.QIn) annotation(
-    Line(points = {{55, -47.2}, {55, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
 
   annotation(
     Diagram(coordinateSystem(extent = {{0, 120}, {120, -80}})));

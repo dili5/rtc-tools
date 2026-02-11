@@ -68,7 +68,6 @@ are implemented with smooth approximations and a small positive head floor.
   - `jiuwei_shengtaiku_H`
   - `shiyan_storage_H`
   - `tiegang_storage_H`
-  - `xixianghe_junction_H`
 
 ### V-H curve source workbook
 
@@ -80,7 +79,6 @@ are implemented with smooth approximations and a small positive head floor.
 - `jiuwei_shengtaikuZ-V`
 - `shiyan_storageZ-V`
 - `tiegang_storageZ-V`
-- `xixianghe_junctionZ-V`
 
 For each sheet:
 
@@ -100,7 +98,6 @@ Notes:
 
 - `yingrenshi_shengtaiku_storage` also accepts the alias sheet name
   `yingrenshi_shengtaiku_storagZ-V`.
-- `xixianghe_junctionZ-V` is optional; if missing, a default curve is used.
 
 ## 2) Property binding strategy
 
