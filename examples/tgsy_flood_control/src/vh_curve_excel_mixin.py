@@ -278,6 +278,12 @@ class VhCurveExcelMixin:
                             f"falling back to Python default curve for {object_name}."
                         )
                         continue
+                    if not np.all(np.isfinite(vh_pairs)):
+                        logger.warning(
+                            f"Sheet {sheet_name} contains non-finite values; "
+                            f"falling back to Python default curve for {object_name}."
+                        )
+                        continue
 
                     curves[object_name] = vh_pairs
         except Exception as error:
