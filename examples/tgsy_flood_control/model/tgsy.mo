@@ -48,7 +48,10 @@ model tgsy
 
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal xixianghe annotation(
     Placement(transformation(origin = {55, -55}, extent = {{-5, -5}, {5, 5}}, rotation = -90)));
-  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator xixianghe_junction(n_QLateral = 1) annotation(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator xixianghe_junction(
+    n_QLateral = 1,
+    V(start = 1000.0, fixed = true, nominal = 1e4)
+  ) annotation(
     Placement(transformation(origin = {55, -44}, extent = {{-4, -4}, {4, 4}}, rotation = -90)));
   Deltares.ChannelFlow.SimpleRouting.BoundaryConditions.Terminal maozhouhe annotation(
     Placement(transformation(origin = {65, 115}, extent = {{5, 5}, {-5, -5}})));
