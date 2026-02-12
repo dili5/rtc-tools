@@ -258,14 +258,24 @@ class VhCurveExcelMixin:
 
     @staticmethod
     def _resample_curve(vh_pairs, target_count):
-        if target_count <= 1 or len(vh_pairs) == target_count:
+        if len(vh_pairs) == 0:
+            return vh_pairs
+        if target_count <= 1:
+            return vh_pairs[:1, :]
+        if len(vh_pairs) == target_count:
             return vh_pairs
 
-        v_values = vh_pairs[:, 0]
-        h_values = vh_pairs[:, 1]
+        # The model uses a small fixed number of V-H nodes (e.g. 5 points).
+        # Sampling by V-range can over-compress low-volume regions when V spans
+        # multiple orders of magnitude. Sampling uniformly in source-point index
+        # preserves the shape implied by the original curve density.
+        sample_indices = np.linspace(0, len(vh_pairs) - 1, target_count)
+        lower = np.floor(sample_indices).astype(int)
+        upper = np.ceil(sample_indices).astype(int)
+        alpha = sample_indices - lower
 
-        target_v = np.linspace(v_values[0], v_values[-1], target_count)
-        target_h = np.interp(target_v, v_values, h_values)
+        target_v = (1.0 - alpha) * vh_pairs[lower, 0] + alpha * vh_pairs[upper, 0]
+        target_h = np.interp(target_v, vh_pairs[:, 0], vh_pairs[:, 1])
         return np.column_stack((target_v, target_h))
 
     def _load_vh_curves(self):
