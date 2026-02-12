@@ -330,7 +330,7 @@ equation
   shengyanshengtaiku_yan_head_drop = 0.5 * (
     (shengyanshengtaiku_yan_head_up - shengyanshengtaiku_yan_head_down) + sqrt((shengyanshengtaiku_yan_head_up - shengyanshengtaiku_yan_head_down) ^ 2 + shengyanshengtaiku_yan_head_smoothing ^ 2)
   );
-  shengyanshengtaiku_yan_Q_calc = shengyanshengtaiku_yan_weir_coefficient * shengyanshengtaiku_yan_crest_length * max(shengyanshengtaiku_yan_head_up, shengyanshengtaiku_yan_head_floor) * sqrt(max(shengyanshengtaiku_yan_head_drop, shengyanshengtaiku_yan_head_floor));
+  shengyanshengtaiku_yan_Q_calc = shengyanshengtaiku_yan_weir_coefficient * shengyanshengtaiku_yan_crest_length * sqrt(shengyanshengtaiku_yan_head_up ^ 2 + shengyanshengtaiku_yan_head_floor ^ 2) * sqrt(sqrt(shengyanshengtaiku_yan_head_drop ^ 2 + shengyanshengtaiku_yan_head_floor ^ 2));
   shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q_calc;
 
   // baoshihu_yihongdao overflow: depends on both upstream and downstream levels.
@@ -343,7 +343,7 @@ equation
   baoshihu_yihongdao_head_drop = 0.5 * (
     (baoshihu_yihongdao_head_up - baoshihu_yihongdao_head_down) + sqrt((baoshihu_yihongdao_head_up - baoshihu_yihongdao_head_down) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
   );
-  baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_crest_length * max(baoshihu_yihongdao_head_up, baoshihu_yihongdao_head_floor) * sqrt(max(baoshihu_yihongdao_head_drop, baoshihu_yihongdao_head_floor));
+  baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_crest_length * sqrt(baoshihu_yihongdao_head_up ^ 2 + baoshihu_yihongdao_head_floor ^ 2) * sqrt(sqrt(baoshihu_yihongdao_head_drop ^ 2 + baoshihu_yihongdao_head_floor ^ 2));
   baoshihu_yihongdao.Q = baoshihu_yihongdao_Q_calc;
 
   connect(shiyan_storage.QLateral[1], shiyan_gongshui.QIn) annotation(
