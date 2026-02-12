@@ -61,7 +61,7 @@ model tgsy
     Placement(transformation(origin = {95, 95}, extent = {{5, -5}, {-5, 5}})));
   Deltares.ChannelFlow.SimpleRouting.Branches.Integrator baoshihu_shengtaiku(n_QLateral = 1) annotation(
     Placement(transformation(origin = {106, 14}, extent = {{-4, 4}, {4, -4}}, rotation = 90)));
-  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator yingrenshi_shengtaiku_storage(
+  Deltares.ChannelFlow.SimpleRouting.Branches.Integrator yingrenshi_shengtaiku(
     n_QLateral = 2
   ) annotation(
     Placement(transformation(origin = {94, 26}, extent = {{-4, -4}, {4, 4}}, rotation = 180)));
@@ -116,16 +116,16 @@ model tgsy
   parameter Real baoshihu_shengtaiku_vh_h4 = 8.9;
   parameter Real baoshihu_shengtaiku_vh_h5 = 9.2;
 
-  parameter Real yingrenshi_shengtaiku_storage_vh_v1 = 1.0e5;
-  parameter Real yingrenshi_shengtaiku_storage_vh_v2 = 4.0e5;
-  parameter Real yingrenshi_shengtaiku_storage_vh_v3 = 8.0e5;
-  parameter Real yingrenshi_shengtaiku_storage_vh_v4 = 1.2e6;
-  parameter Real yingrenshi_shengtaiku_storage_vh_v5 = 1.7e6;
-  parameter Real yingrenshi_shengtaiku_storage_vh_h1 = 7.0;
-  parameter Real yingrenshi_shengtaiku_storage_vh_h2 = 7.6;
-  parameter Real yingrenshi_shengtaiku_storage_vh_h3 = 8.1;
-  parameter Real yingrenshi_shengtaiku_storage_vh_h4 = 8.5;
-  parameter Real yingrenshi_shengtaiku_storage_vh_h5 = 8.9;
+  parameter Real yingrenshi_shengtaiku_vh_v1 = 1.0e5;
+  parameter Real yingrenshi_shengtaiku_vh_v2 = 4.0e5;
+  parameter Real yingrenshi_shengtaiku_vh_v3 = 8.0e5;
+  parameter Real yingrenshi_shengtaiku_vh_v4 = 1.2e6;
+  parameter Real yingrenshi_shengtaiku_vh_v5 = 1.7e6;
+  parameter Real yingrenshi_shengtaiku_vh_h1 = 7.0;
+  parameter Real yingrenshi_shengtaiku_vh_h2 = 7.6;
+  parameter Real yingrenshi_shengtaiku_vh_h3 = 8.1;
+  parameter Real yingrenshi_shengtaiku_vh_h4 = 8.5;
+  parameter Real yingrenshi_shengtaiku_vh_h5 = 8.9;
 
   parameter Real jiuwei_shengtaiku_vh_v1 = 2.0e5;
   parameter Real jiuwei_shengtaiku_vh_v2 = 6.0e5;
@@ -160,13 +160,20 @@ model tgsy
   parameter Real tiegang_storage_vh_h4 = 7.8;
   parameter Real tiegang_storage_vh_h5 = 9.0;
 
-  parameter Real baoshihu_yihongdao_weir_coefficient = 1.7;
-  parameter SI.Length baoshihu_yihongdao_weir_width = 10.0;
-  parameter SI.Position baoshihu_yihongdao_crest_level = 8.8;
-  parameter SI.VolumeFlowRate baoshihu_yihongdao_q_max = 1500.0;
+  // Weir parameters (overflow controlled by upstream/downstream water levels).
+  parameter Real shengyanshengtaiku_yan_weir_coefficient = 1.70;
+  parameter SI.Position shengyanshengtaiku_yan_crest_level = 38.29;
+  parameter SI.Length shengyanshengtaiku_yan_crest_length = 50.0;
+  parameter SI.Length shengyanshengtaiku_yan_crest_width = 10.0;
+  parameter SI.Length shengyanshengtaiku_yan_head_smoothing = 1e-2;
+  parameter SI.Length shengyanshengtaiku_yan_head_floor = 1e-6;
+
+  parameter Real baoshihu_yihongdao_weir_coefficient = 1.70;
+  parameter SI.Position baoshihu_yihongdao_crest_level = 42.13;
+  parameter SI.Length baoshihu_yihongdao_crest_length = 30.0;
+  parameter SI.Length baoshihu_yihongdao_crest_width = 10.0;
   parameter SI.Length baoshihu_yihongdao_head_smoothing = 1e-2;
   parameter SI.Length baoshihu_yihongdao_head_floor = 1e-6;
-  parameter SI.VolumeFlowRate baoshihu_yihongdao_q_smoothing = 1e-2;
 
   input SI.VolumeFlowRate shiyanhe_Q_in(fixed = true);
   input SI.VolumeFlowRate baoshihu_Q_in(fixed = true);
@@ -184,7 +191,6 @@ model tgsy
   input SI.VolumeFlowRate tiegang_yihongdao_gate_Q(fixed = false, min = 0.0, max = 2000.0);
   input SI.VolumeFlowRate baoshihu_xieshuizha_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate shiyan_yihongdaozha_Q(fixed = false, min = 0.0, max = 2000.0);
-  input SI.VolumeFlowRate shengyanshengtaiku_yan_Q(fixed = false, min = 0.0, max = 1500.0);
   input SI.VolumeFlowRate shiyan_shengtaiku_xieshuizha_Q(
     fixed = false,
     min = 0.0,
@@ -193,7 +199,7 @@ model tgsy
 
   output SI.Volume shiyan_shengtaiku_V = shiyan_shengtaiku.V;
   output SI.Volume baoshihu_shengtaiku_V = baoshihu_shengtaiku.V;
-  output SI.Volume yingrenshi_shengtaiku_V = yingrenshi_shengtaiku_storage.V;
+  output SI.Volume yingrenshi_shengtaiku_V = yingrenshi_shengtaiku.V;
   output SI.Volume jiuwei_shengtaiku_V = jiuwei_shengtaiku.V;
   output SI.Volume shiyan_storage_V = shiyan_storage.V;
   output SI.Volume tiegang_storage_V = tiegang_storage.V;
@@ -207,10 +213,14 @@ model tgsy
   output SI.VolumeFlowRate maozhouhe_Q = maozhouhe.QIn.Q;
   output SI.VolumeFlowRate shiyan_gongshui_Q = shiyan_gongshui.QIn.Q;
   output SI.VolumeFlowRate tiegang_gongshui_Q = tiegang_gongshui.QIn.Q;
-  output SI.Length baoshihu_yihongdao_head_raw;
+  output SI.Length shengyanshengtaiku_yan_head_up;
+  output SI.Length shengyanshengtaiku_yan_head_down;
+  output SI.Length shengyanshengtaiku_yan_head_drop;
+  output SI.VolumeFlowRate shengyanshengtaiku_yan_Q_calc;
+  output SI.Length baoshihu_yihongdao_head_up;
+  output SI.Length baoshihu_yihongdao_head_down;
+  output SI.Length baoshihu_yihongdao_head_drop;
   output SI.VolumeFlowRate baoshihu_yihongdao_Q_calc;
-  output SI.Length baoshihu_yihongdao_head_eff;
-  output SI.VolumeFlowRate baoshihu_yihongdao_Q_free;
 
 equation
   shiyanhe_inflow.Q = shiyanhe_Q_in;
@@ -229,7 +239,6 @@ equation
   tiegang_yihongdao_gate.Q = tiegang_yihongdao_gate_Q;
   baoshihu_xieshuizha.Q = baoshihu_xieshuizha_Q;
   shiyan_yihongdaozha.Q = shiyan_yihongdaozha_Q;
-  shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q;
   shiyan_shengtaiku_xieshuizha.Q = shiyan_shengtaiku_xieshuizha_Q;
 
   shiyan_shengtaiku_H = level_from_v_curve(
@@ -259,17 +268,17 @@ equation
     baoshihu_shengtaiku_vh_h5
   );
   yingrenshi_shengtaiku_H = level_from_v_curve(
-    yingrenshi_shengtaiku_storage.V,
-    yingrenshi_shengtaiku_storage_vh_v1,
-    yingrenshi_shengtaiku_storage_vh_v2,
-    yingrenshi_shengtaiku_storage_vh_v3,
-    yingrenshi_shengtaiku_storage_vh_v4,
-    yingrenshi_shengtaiku_storage_vh_v5,
-    yingrenshi_shengtaiku_storage_vh_h1,
-    yingrenshi_shengtaiku_storage_vh_h2,
-    yingrenshi_shengtaiku_storage_vh_h3,
-    yingrenshi_shengtaiku_storage_vh_h4,
-    yingrenshi_shengtaiku_storage_vh_h5
+    yingrenshi_shengtaiku.V,
+    yingrenshi_shengtaiku_vh_v1,
+    yingrenshi_shengtaiku_vh_v2,
+    yingrenshi_shengtaiku_vh_v3,
+    yingrenshi_shengtaiku_vh_v4,
+    yingrenshi_shengtaiku_vh_v5,
+    yingrenshi_shengtaiku_vh_h1,
+    yingrenshi_shengtaiku_vh_h2,
+    yingrenshi_shengtaiku_vh_h3,
+    yingrenshi_shengtaiku_vh_h4,
+    yingrenshi_shengtaiku_vh_h5
   );
   jiuwei_shengtaiku_H = level_from_v_curve(
     jiuwei_shengtaiku.V,
@@ -311,17 +320,30 @@ equation
     tiegang_storage_vh_h5
   );
 
-  // Smooth positive-part head to avoid singular Hessian at crest level.
-  baoshihu_yihongdao_head_raw = 0.5 * (
+  // shengyanshengtaiku_yan overflow: depends on both upstream and downstream levels.
+  shengyanshengtaiku_yan_head_up = 0.5 * (
+    (shiyan_shengtaiku_H - shengyanshengtaiku_yan_crest_level) + sqrt((shiyan_shengtaiku_H - shengyanshengtaiku_yan_crest_level) ^ 2 + shengyanshengtaiku_yan_head_smoothing ^ 2)
+  );
+  shengyanshengtaiku_yan_head_down = 0.5 * (
+    (shiyan_storage_H - shengyanshengtaiku_yan_crest_level) + sqrt((shiyan_storage_H - shengyanshengtaiku_yan_crest_level) ^ 2 + shengyanshengtaiku_yan_head_smoothing ^ 2)
+  );
+  shengyanshengtaiku_yan_head_drop = 0.5 * (
+    (shengyanshengtaiku_yan_head_up - shengyanshengtaiku_yan_head_down) + sqrt((shengyanshengtaiku_yan_head_up - shengyanshengtaiku_yan_head_down) ^ 2 + shengyanshengtaiku_yan_head_smoothing ^ 2)
+  );
+  shengyanshengtaiku_yan_Q_calc = shengyanshengtaiku_yan_weir_coefficient * shengyanshengtaiku_yan_crest_length * max(shengyanshengtaiku_yan_head_up, shengyanshengtaiku_yan_head_floor) * sqrt(max(shengyanshengtaiku_yan_head_drop, shengyanshengtaiku_yan_head_floor));
+  shengyanshengtaiku_yan.Q = shengyanshengtaiku_yan_Q_calc;
+
+  // baoshihu_yihongdao overflow: depends on both upstream and downstream levels.
+  baoshihu_yihongdao_head_up = 0.5 * (
     (baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) + sqrt((baoshihu_shengtaiku_H - baoshihu_yihongdao_crest_level) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
   );
-  // Guard against tiny negative values from floating-point cancellation.
-  baoshihu_yihongdao_head_eff = max(baoshihu_yihongdao_head_raw, baoshihu_yihongdao_head_floor);
-  baoshihu_yihongdao_Q_free = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_weir_width * baoshihu_yihongdao_head_eff * sqrt(baoshihu_yihongdao_head_eff);
-  // Smooth min(Q_free, Q_max) to keep equations differentiable.
-  baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_q_max - 0.5 * (
-    (baoshihu_yihongdao_q_max - baoshihu_yihongdao_Q_free) + sqrt((baoshihu_yihongdao_q_max - baoshihu_yihongdao_Q_free) ^ 2 + baoshihu_yihongdao_q_smoothing ^ 2)
+  baoshihu_yihongdao_head_down = 0.5 * (
+    (tiegang_storage_H - baoshihu_yihongdao_crest_level) + sqrt((tiegang_storage_H - baoshihu_yihongdao_crest_level) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
   );
+  baoshihu_yihongdao_head_drop = 0.5 * (
+    (baoshihu_yihongdao_head_up - baoshihu_yihongdao_head_down) + sqrt((baoshihu_yihongdao_head_up - baoshihu_yihongdao_head_down) ^ 2 + baoshihu_yihongdao_head_smoothing ^ 2)
+  );
+  baoshihu_yihongdao_Q_calc = baoshihu_yihongdao_weir_coefficient * baoshihu_yihongdao_crest_length * max(baoshihu_yihongdao_head_up, baoshihu_yihongdao_head_floor) * sqrt(max(baoshihu_yihongdao_head_drop, baoshihu_yihongdao_head_floor));
   baoshihu_yihongdao.Q = baoshihu_yihongdao_Q_calc;
 
   connect(shiyan_storage.QLateral[1], shiyan_gongshui.QIn) annotation(
@@ -342,7 +364,7 @@ equation
     Line(points = {{29.2, 6}, {43.2, 6}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(jiuwei_liantongzha.QOut, tiegang_storage.QLateral[1]) annotation(
     Line(points = {{49.2, 6}, {63.5, 6}, {63.5, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_shengtaiku_storage.QOut, yingrenshi_xieshuizha.QIn) annotation(
+  connect(yingrenshi_shengtaiku.QOut, yingrenshi_xieshuizha.QIn) annotation(
     Line(points = {{90.8, 26}, {87.6, 26}, {87.6, 34}, {80.8, 34}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(yingrenshi_xieshuizha.QOut, jiuwei_shengtaiku.QLateral[1]) annotation(
     Line(points = {{74.8, 34}, {22.6, 34}, {22.6, 6.3}}, arrow = {Arrow.None, Arrow.Filled}));
@@ -358,7 +380,7 @@ equation
     Line(points = {{70, -41.2}, {62, -41.2}, {62, -51.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_shengtaiku.QOut, baoshihu_xieshuizha.QIn) annotation(
     Line(points = {{106, 17.2}, {106, 20.3}, {109, 20.3}, {109, 26.2}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(baoshihu_xieshuizha.QOut, yingrenshi_shengtaiku_storage.QLateral[1]) annotation(
+  connect(baoshihu_xieshuizha.QOut, yingrenshi_shengtaiku.QLateral[1]) annotation(
     Line(points = {{102.8, 26}, {98, 26}, {98, 29.2}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_shengtaiku.QLateral[1], baoshihu_yihongdao.QIn) annotation(
     Line(points = {{106.3, 17.2}, {103, 17.2}, {103, 14.2}, {97, 14.2}}, arrow = {Arrow.None, Arrow.Filled}));
@@ -376,9 +398,9 @@ equation
     Line(points = {{85, 109}, {81.5, 109}, {81.5, 115}, {69, 115}}, arrow = {Arrow.None, Arrow.Filled}));
   connect(baoshihu_yihongdao.QOut, tiegang_storage.QLateral[4]) annotation(
     Line(points = {{90.8, 14}, {74, 14}, {74, -9.7}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_inflow.QOut, yingrenshi_shengtaiku_storage.QIn) annotation(
+  connect(yingrenshi_inflow.QOut, yingrenshi_shengtaiku.QIn) annotation(
     Line(points = {{94, 32.8}, {94, 29.2}}, arrow = {Arrow.None, Arrow.Filled}));
-  connect(yingrenshi_shengtaiku_storage.QLateral[2], yingrenshi_liantongzha.QIn) annotation(
+  connect(yingrenshi_shengtaiku.QLateral[2], yingrenshi_liantongzha.QIn) annotation(
     Line(points = {{91.2, 29.2}, {84, 29.2}, {84, 22}, {80.8, 22}}, arrow = {Arrow.None, Arrow.Filled}));
 
   annotation(

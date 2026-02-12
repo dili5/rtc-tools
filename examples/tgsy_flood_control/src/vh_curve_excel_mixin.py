@@ -33,14 +33,15 @@ class VhCurveExcelMixin:
     vh_curve_objects = (
         "shiyan_shengtaiku",
         "baoshihu_shengtaiku",
-        "yingrenshi_shengtaiku_storage",
+        "yingrenshi_shengtaiku",
         "jiuwei_shengtaiku",
         "shiyan_storage",
         "tiegang_storage",
     )
     # Object -> allowed sheet names (in order of preference).
     vh_curve_sheet_aliases = {
-        "yingrenshi_shengtaiku_storage": (
+        "yingrenshi_shengtaiku": (
+            "yingrenshi_shengtaikuZ-V",
             "yingrenshi_shengtaiku_storageZ-V",
             "yingrenshi_shengtaiku_storagZ-V",
         ),
@@ -68,7 +69,7 @@ class VhCurveExcelMixin:
             ],
             dtype=float,
         ),
-        "yingrenshi_shengtaiku_storage": np.array(
+        "yingrenshi_shengtaiku": np.array(
             [
                 [1.0e5, 7.0],
                 [4.0e5, 7.6],

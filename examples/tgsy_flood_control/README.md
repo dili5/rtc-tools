@@ -38,13 +38,11 @@ These are set as `fixed = false` inputs and mapped to each
 - `tiegang_yihongdao_gate_Q`
 - `baoshihu_xieshuizha_Q`
 - `shiyan_yihongdaozha_Q`
-- `shengyanshengtaiku_yan_Q`
 - `shiyan_shengtaiku_xieshuizha_Q`
 
-`baoshihu_yihongdao` is no longer a direct control input; its discharge is
-computed from `baoshihu_shengtaiku` water level using a weir equation.
-For solver robustness (RTC-Tools 2.7.3/IPOPT), the weir head and max-flow cap
-are implemented with smooth approximations and a small positive head floor.
+`baoshihu_yihongdao` and `shengyanshengtaiku_yan` are no longer direct control
+inputs; their discharges are computed from upstream/downstream water levels
+using smooth weir equations.
 
 ### Outputs (for flood-control evaluation)
 
@@ -75,7 +73,7 @@ are implemented with smooth approximations and a small positive head floor.
 
 - `shiyan_shengtaikuZ-V`
 - `baoshihu_shengtaikuZ-V`
-- `yingrenshi_shengtaiku_storageZ-V`
+- `yingrenshi_shengtaikuZ-V`
 - `jiuwei_shengtaikuZ-V`
 - `shiyan_storageZ-V`
 - `tiegang_storageZ-V`
@@ -96,8 +94,8 @@ range, monotonicity, and initial V consistency) to help locate bad data.
 
 Notes:
 
-- `yingrenshi_shengtaiku_storage` also accepts the alias sheet name
-  `yingrenshi_shengtaiku_storagZ-V`.
+- `yingrenshi_shengtaiku` also accepts alias sheet names
+  `yingrenshi_shengtaiku_storageZ-V` and `yingrenshi_shengtaiku_storagZ-V`.
 
 ## 2) Property binding strategy
 
@@ -115,7 +113,8 @@ Use these three layers:
      - `*_V_min`, `*_V_max`
      - `shiyan_gongshui_Q_min`, `tiegang_gongshui_Q_min`
      - `shiyan_gongshui_Q_set`, `tiegang_gongshui_Q_set` (supply branch setpoints)
-   - If an old file still contains `baoshihu_yihongdao_Q`, it is now ignored.
+  - If an old file still contains `baoshihu_yihongdao_Q` or
+    `shengyanshengtaiku_yan_Q`, they are now ignored.
 
 ## 2.1) Important: avoid over-constrained topology
 
