@@ -167,7 +167,7 @@ class VhCurveExcelMixin:
         key_pattern_v = re.compile(rf"^{re.escape(object_name)}_vh_v(\d+)$")
         key_pattern_h = re.compile(rf"^{re.escape(object_name)}_vh_h(\d+)$")
 
-        for key in self.get_parameter_variables().keys():
+        for key in self._parameter_variable_names():
             match_v = key_pattern_v.match(key)
             if match_v:
                 names_v.append((int(match_v.group(1)), key))
@@ -185,6 +185,20 @@ class VhCurveExcelMixin:
             "v": [k for _, k in names_v[:n]],
             "h": [k for _, k in names_h[:n]],
         }
+
+    def _parameter_variable_names(self):
+        # SimulationProblem exposes get_parameter_variables(); optimization
+        # problems expose parameter symbols via dae_variables["parameters"].
+        get_parameter_variables = getattr(self, "get_parameter_variables", None)
+        if callable(get_parameter_variables):
+            parameter_variables = get_parameter_variables()
+            return parameter_variables.keys()
+
+        dae_variables = getattr(self, "dae_variables", None)
+        if isinstance(dae_variables, dict):
+            return [symbol.name() for symbol in dae_variables.get("parameters", [])]
+
+        return []
 
     def _assign_curve_parameters(self, parameters, object_name, vh_pairs):
         assigned = False
